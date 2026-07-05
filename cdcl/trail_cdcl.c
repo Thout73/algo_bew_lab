@@ -45,7 +45,7 @@ void trail_push(Trail *trail,
     trail->data[trail->size].decision_lvl = decision_lvl;
 
     printf("PUSHED ");
-    printf("lit = %d, value = %d, trail_size = %d\n", literal, value, trail->size);
+    printf("lit = %d, value = %d, trail_size = %ld\n", literal, value, trail->size);
 
     trail->size++;
 }

@@ -52,32 +52,8 @@ static void learned_add(LearnedClauses *lc, CDCL_Clause *c)
     }
     lc->data[lc->size++] = c;
 }
-CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *watch_DB, int *next_clause_id, Assignment *assignment, int conflict_qhead, int *backtrack_level, int num_vars)
+CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *watch_DB, int *next_clause_id, Assignment *assignment, CDCL_Clause *confl, int *backtrack_level, int num_vars, int decision_lvl)
 {
-    int decision_lvl = trail->data[conflict_qhead].decision_lvl;
-
-    CDCL_Clause *confl = trail->data[conflict_qhead].reason;
-
-    if (confl == NULL)
-    {
-        *backtrack_level = decision_lvl - 1;
-        CDCL_Clause *new_clause = malloc(sizeof(CDCL_Clause));
-        new_clause->literals = malloc(1 * sizeof(int));
-        new_clause->size = 1;
-        new_clause->id = (*next_clause_id)++;
-        new_clause->literals[0] = (trail->data[conflict_qhead].literal + 1) * trail->data[conflict_qhead].value;
-
-        // print new clause
-        printf("LEARN: ");
-        for (int i = 0; i < new_clause->size; i++)
-        {
-            printf("%d ", new_clause->literals[i]);
-        }
-        printf(" Decisionlvl: %d\n", decision_lvl);
-
-        return new_clause;
-    }
-
     int *learned_lits = malloc(num_vars * sizeof(int));
     int learned_size = 0;
 
@@ -97,7 +73,7 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
         if (assignment[var].decision_lvl == decision_lvl)
             learn_queue[learn_queue_size++] = lit;
         else
-            sorted_insert_unique(learned_lits, &learned_size, -1 * lit);
+            sorted_insert_unique(learned_lits, &learned_size, lit);
     }
 
     while (learn_queue_size - learn_queue_head != 1)
@@ -106,22 +82,25 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
         int curr_var = abs(curr_lit) - 1;
         CDCL_Clause *curr_reason = assignment[curr_var].reason;
 
-        for (int i = 0; i < curr_reason->size; i++)
+        if (curr_reason != NULL)
         {
-            int lit = curr_reason->literals[i];
-            int var = abs(lit) - 1;
+            for (int i = 0; i < curr_reason->size; i++)
+            {
+                int lit = curr_reason->literals[i];
+                int var = abs(lit) - 1;
 
-            if (var == curr_var)
-                continue;
-            if (seen[var] == 1)
-                continue;
+                if (var == curr_var)
+                    continue;
+                if (seen[var] == 1)
+                    continue;
 
-            seen[var] = 1;
+                seen[var] = 1;
 
-            if (assignment[var].decision_lvl == decision_lvl)
-                learn_queue[learn_queue_size++] = lit;
-            else
-                sorted_insert_unique(learned_lits, &learned_size, -1 * lit);
+                if (assignment[var].decision_lvl == decision_lvl)
+                    learn_queue[learn_queue_size++] = lit;
+                else
+                    sorted_insert_unique(learned_lits, &learned_size, lit);
+            }
         }
     }
 

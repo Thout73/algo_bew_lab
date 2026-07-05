@@ -15,7 +15,7 @@ int sign(int x)
     return 1;
 }
 
-int Unitpropagation(CDCL_Clause *clauses, int number_of_clauses, Trail *trail, WatchDB *watch_DB, Assignment *assignment, int decision_lvl, int start_qhead)
+CDCL_Clause *Unitpropagation(CDCL_Clause *clauses, int number_of_clauses, Trail *trail, WatchDB *watch_DB, Assignment *assignment, int decision_lvl, int start_qhead)
 {
     int qhead = start_qhead;
     while (qhead < trail->size && trail->size > 0)
@@ -118,7 +118,7 @@ int Unitpropagation(CDCL_Clause *clauses, int number_of_clauses, Trail *trail, W
                         if (assignment[abs(curr->literals[inactive_watch]) - 1].value != UNASSIGNED &&
                             assignment[abs(curr->literals[inactive_watch]) - 1].value != sign(curr->literals[inactive_watch]))
                         {
-                            return qhead; // conflict
+                            return curr; // conflict
                         }
                     }
                 }
@@ -127,7 +127,7 @@ int Unitpropagation(CDCL_Clause *clauses, int number_of_clauses, Trail *trail, W
         }
         qhead++;
     }
-    return -1;
+    return NULL;
 }
 int backtrack(int target_lvl, Trail *trail, Assignment *assignment)
 {
@@ -210,14 +210,14 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
 
     while (1)
     {
-        int conflict_qhead = Unitpropagation(clauses, number_of_clauses, &trail, watchDB, assignment, decision_lvl, trail_lvl);
-        while (conflict_qhead != -1)
+        CDCL_Clause *confl_clause = Unitpropagation(clauses, number_of_clauses, &trail, watchDB, assignment, decision_lvl, trail_lvl);
+        while (confl_clause != NULL)
         {
             if (decision_lvl == 0)
             {
                 return 0;
             }
-            CDCL_Clause *learned_clause = analyse_conflict(&trail, &learned, watchDB, &next_claus_id, assignment, conflict_qhead, &backtrack_level, number_of_variables);
+            CDCL_Clause *learned_clause = analyse_conflict(&trail, &learned, watchDB, &next_claus_id, assignment, confl_clause, &backtrack_level, number_of_variables, decision_lvl);
             backtrack(backtrack_level, &trail, assignment);
             decision_lvl = backtrack_level;
 
@@ -230,12 +230,12 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
                 assignment[var].reason = learned_clause;
                 trail_push(&trail, var, sign(lit), learned_clause, decision_lvl);
                 trail_lvl = trail.size - 1;
-                conflict_qhead = Unitpropagation(clauses, number_of_clauses, &trail, watchDB, assignment, decision_lvl, trail_lvl);
+                confl_clause = Unitpropagation(clauses, number_of_clauses, &trail, watchDB, assignment, decision_lvl, trail_lvl);
             }
             else
             {
                 trail_lvl = 0;
-                conflict_qhead = Unitpropagation(clauses, number_of_clauses, &trail, watchDB, assignment, decision_lvl, trail_lvl);
+                confl_clause = Unitpropagation(clauses, number_of_clauses, &trail, watchDB, assignment, decision_lvl, trail_lvl);
             }
         }
         if (trail.size == number_of_variables)
