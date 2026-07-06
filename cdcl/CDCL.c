@@ -54,72 +54,67 @@ CDCL_Clause *Unitpropagation(CDCL_Clause *clauses, int number_of_clauses, Trail 
                 inactive_watch = curr->watch1;
                 which_active = 2;
             }
+            int old_watch = active_watch;
+            int curr_lit;
+            int sat = 0;
+            int unassigned = 0;
 
-            // if lit is not watched (kann nicht sein)
-            if (active_watch != -1)
+            // walk watch
+            do
             {
-                int old_watch = active_watch;
-                int curr_lit;
-                int sat = 0;
-                int unassigned = 0;
-
-                // walk watch
-                do
+                active_watch = (active_watch + 1) % curr->size;
+                if (active_watch == inactive_watch)
                 {
                     active_watch = (active_watch + 1) % curr->size;
-                    if (active_watch == inactive_watch)
-                    {
-                        active_watch = (active_watch + 1) % curr->size;
-                    }
-
-                    curr_lit = curr->literals[active_watch];
-                    if (assignment[abs(curr_lit) - 1].value == sign(curr_lit) && assignment[abs(curr_lit) - 1].decision_lvl <= decision_lvl)
-                    {
-                        sat = 1;
-                    }
-                    unassigned = (assignment[abs(curr_lit) - 1].value == 0);
-                } while (unassigned == 0 && active_watch != old_watch && sat == 0); // stop when unassigend, true or loop
-
-                if (active_watch != old_watch)
-                {
-                    move_watch(watch_DB, curr->literals[old_watch], curr->literals[active_watch], curr);
                 }
 
-                if (which_active == 1)
+                curr_lit = curr->literals[active_watch];
+                if (assignment[abs(curr_lit) - 1].value == sign(curr_lit) && assignment[abs(curr_lit) - 1].decision_lvl <= decision_lvl)
                 {
-                    curr->watch1 = active_watch;
+                    sat = 1;
+                }
+                unassigned = (assignment[abs(curr_lit) - 1].value == 0);
+            } while (unassigned == 0 && active_watch != old_watch && sat == 0); // stop when unassigend, true or loop
+
+            if (active_watch != old_watch)
+            {
+                move_watch(watch_DB, curr->literals[old_watch], curr->literals[active_watch], curr);
+            }
+
+            if (which_active == 1)
+            {
+                curr->watch1 = active_watch;
+            }
+            else
+            {
+                curr->watch2 = active_watch;
+            }
+
+            if (curr->watch1 == curr->watch2)
+            {
+                printf("%d, %d\n", curr->id, decision_lvl);
+            }
+
+            // no further unassigend
+            if (active_watch == old_watch)
+            {
+                if (assignment[abs(curr->literals[inactive_watch]) - 1].value == 0 || assignment[abs(curr->literals[inactive_watch]) - 1].decision_lvl > decision_lvl) // true
+                {
+                    curr_lit = curr->literals[inactive_watch];
+                    // change assigenmt, push on trail
+
+                    assignment[abs(curr_lit) - 1].value = sign(curr_lit);
+                    assignment[abs(curr_lit) - 1].decision_lvl = decision_lvl;
+                    assignment[abs(curr_lit) - 1].reason = curr;
+
+                    trail_push(trail, abs(curr_lit) - 1, sign(curr_lit), curr, decision_lvl);
                 }
                 else
                 {
-                    curr->watch2 = active_watch;
-                }
-
-                if (curr->watch1 == curr->watch2)
-                {
-                    printf("%d, %d\n", curr->id, decision_lvl);
-                }
-
-                // no further unassigend
-                if (active_watch == old_watch)
-                {
-                    if (assignment[abs(curr->literals[inactive_watch]) - 1].value == 0 || assignment[abs(curr->literals[inactive_watch]) - 1].decision_lvl > decision_lvl) // true
+                    if (assignment[abs(curr->literals[inactive_watch]) - 1].value != UNASSIGNED &&
+                        assignment[abs(curr->literals[inactive_watch]) - 1].value != sign(curr->literals[inactive_watch]))
                     {
-                        curr_lit = curr->literals[inactive_watch];
-                        // change assigenmt, push on trail
-
-                        assignment[abs(curr_lit) - 1].value = sign(curr_lit);
-                        assignment[abs(curr_lit) - 1].decision_lvl = decision_lvl;
-                        assignment[abs(curr_lit) - 1].reason = curr;
-
-                        trail_push(trail, abs(curr_lit) - 1, sign(curr_lit), curr, decision_lvl);
-                    }
-                    else
-                    {
-                        if (assignment[abs(curr->literals[inactive_watch]) - 1].value != UNASSIGNED &&
-                            assignment[abs(curr->literals[inactive_watch]) - 1].value != sign(curr->literals[inactive_watch]))
-                        {
-                            return curr; // conflict
-                        }
+                        return curr; // conflict
                     }
                 }
                 i++;
@@ -221,7 +216,7 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
             backtrack(backtrack_level, &trail, assignment);
             decision_lvl = backtrack_level;
 
-            if (learned_clause->size == 1)
+            if (learned_clause != NULL && learned_clause->size == 1)
             {
                 int lit = learned_clause->literals[0];
                 int var = abs(lit) - 1;

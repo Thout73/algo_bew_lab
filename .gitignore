@@ -2,3 +2,5 @@ cnf_files/
 env/
 .vscode/
 cdcl/solver
+*.exe
+cdcl/debug.cnf
