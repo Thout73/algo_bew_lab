@@ -57,7 +57,7 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
     int *learned_lits = malloc(num_vars * sizeof(int));
     int learned_size = 0;
 
-    int *learn_queue = malloc(num_vars * sizeof(int));
+    int *learn_queue = calloc(num_vars, sizeof(int));
     int learn_queue_head = 0;
     int learn_queue_size = 0;
 
@@ -76,6 +76,11 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
             sorted_insert_unique(learned_lits, &learned_size, lit);
     }
 
+    if (learn_queue[0] == 0)
+    {
+        *backtrack_level = decision_lvl - 1;
+        return NULL;
+    }
     while (learn_queue_size - learn_queue_head != 1)
     {
         int curr_lit = learn_queue[learn_queue_head++];
@@ -133,7 +138,21 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
         }
     }
 
-    new_clause->watch2 = watch2;
+    if (second_highest == 0)
+    {
+        if (new_clause->watch1 == 0)
+        {
+            new_clause->watch2 = 1;
+        }
+        else
+        {
+            new_clause->watch2 = 0;
+        }
+    }
+    else
+    {
+        new_clause->watch2 = watch2;
+    }
 
     *backtrack_level = second_highest;
 
