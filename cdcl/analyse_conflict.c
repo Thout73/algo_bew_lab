@@ -52,7 +52,8 @@ static void learned_add(LearnedClauses *lc, CDCL_Clause *c)
     }
     lc->data[lc->size++] = c;
 }
-CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *watch_DB, int *next_clause_id, Assignment *assignment, CDCL_Clause *confl, int *backtrack_level, int num_vars, int decision_lvl)
+
+CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *watch_DB, int *next_clause_id, Assignment *assignment, CDCL_Clause *confl, int *backtrack_level, int *UIP_lit, int num_vars, int decision_lvl)
 {
     int *learned_lits = malloc(num_vars * sizeof(int));
     int learned_size = 0;
@@ -76,11 +77,6 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
             sorted_insert_unique(learned_lits, &learned_size, lit);
     }
 
-    if (learn_queue[0] == 0)
-    {
-        *backtrack_level = decision_lvl - 1;
-        return NULL;
-    }
     while (learn_queue_size - learn_queue_head != 1)
     {
         int curr_lit = learn_queue[learn_queue_head++];
@@ -111,6 +107,7 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
 
     // UIP selbst noch hinzufügen
     sorted_insert_unique(learned_lits, &learned_size, learn_queue[learn_queue_head]);
+    *UIP_lit = learn_queue[learn_queue_head];
 
     CDCL_Clause *new_clause = malloc(sizeof(CDCL_Clause));
     new_clause->literals = malloc(learned_size * sizeof(int));
@@ -118,8 +115,23 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
     new_clause->id = (*next_clause_id)++;
     memcpy(new_clause->literals, learned_lits, learned_size * sizeof(int));
     free(learned_lits);
+    free(learn_queue);
+    free(seen);
 
-    int second_highest = 0;
+    if (learned_size == 1)
+    {
+        // print new clause
+        printf("LEARN: ");
+        for (int i = 0; i < new_clause->size; i++)
+        {
+            printf("%d ", new_clause->literals[i]);
+        }
+        printf("Decisionlvl: %d Backtrack: %d\n", decision_lvl, *backtrack_level);
+        *backtrack_level = 0;
+        return new_clause;
+    }
+
+    int second_highest = -1;
     int watch2 = 0;
     for (int i = 0; i < new_clause->size; i++)
     {
@@ -138,21 +150,7 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
         }
     }
 
-    if (second_highest == 0)
-    {
-        if (new_clause->watch1 == 0)
-        {
-            new_clause->watch2 = 1;
-        }
-        else
-        {
-            new_clause->watch2 = 0;
-        }
-    }
-    else
-    {
-        new_clause->watch2 = watch2;
-    }
+    new_clause->watch2 = watch2;
 
     *backtrack_level = second_highest;
 

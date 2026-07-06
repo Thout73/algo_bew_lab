@@ -47,7 +47,7 @@ typedef struct
 } LearnedClauses;
 
 void learned_init(LearnedClauses *lc);
-CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *watch_DB, int *next_clause_id, Assignment *assignment, CDCL_Clause *confl, int *backtrack_level, int num_vars, int decision_lvl);
+CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *watch_DB, int *next_clause_id, Assignment *assignment, CDCL_Clause *confl, int *backtrack_level, int *UIP_lit, int num_vars, int decision_lvl);
 
 void trail_init(Trail *trail);
 
