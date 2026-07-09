@@ -37,7 +37,7 @@ void learned_init(LearnedClauses *lc)
     }
 }
 
-static void learned_add(LearnedClauses *lc, CDCL_Clause *c)
+static void learned_add(LearnedClauses *lc, CDCL_Clause *clause)
 {
     if (lc->size == lc->capacity)
     {
@@ -50,7 +50,7 @@ static void learned_add(LearnedClauses *lc, CDCL_Clause *c)
         }
         lc->data = tmp;
     }
-    lc->data[lc->size++] = c;
+    lc->data[lc->size++] = clause;
 }
 
 CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *watch_DB, int *next_clause_id, Assignment *assignment, CDCL_Clause *confl, int *backtrack_level, int *UIP_lit, int num_vars, int decision_lvl)
@@ -68,6 +68,7 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
     {
         int lit = confl->literals[i];
         int var = abs(lit) - 1;
+        assignment[var].vsids_counter += trail->b;
         if (seen[var] == 1)
             continue;
         seen[var] = 1;

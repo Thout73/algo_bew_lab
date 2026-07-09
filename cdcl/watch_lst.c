@@ -23,7 +23,7 @@ WatchDB *watchdb_init(int num_vars)
     return db;
 }
 
-void watchlist_add(WatchList *wl, CDCL_Clause *c)
+void watchlist_add(WatchList *wl, CDCL_Clause *clause)
 {
     if (wl->size == wl->cap)
     {
@@ -31,14 +31,14 @@ void watchlist_add(WatchList *wl, CDCL_Clause *c)
         wl->data = realloc(wl->data, wl->cap * sizeof(CDCL_Clause *));
     }
 
-    wl->data[wl->size++] = c;
+    wl->data[wl->size++] = clause;
 }
 
-void watchlist_remove(WatchList *wl, CDCL_Clause *c)
+void watchlist_remove(WatchList *wl, CDCL_Clause *clause)
 {
     for (int i = 0; i < wl->size; i++)
     {
-        if (wl->data[i] == c)
+        if (wl->data[i] == clause)
         {
             wl->data[i] = wl->data[wl->size - 1];
             wl->size--;
@@ -51,40 +51,40 @@ void build_watchdb(WatchDB *db, CDCL_Clause *clauses, int n_clauses)
 {
     for (int i = 0; i < n_clauses; i++)
     {
-        CDCL_Clause *c = &clauses[i];
+        CDCL_Clause *clause = &clauses[i];
 
-        int lit1 = clauses[i].literals[c->watch1];
-        int lit2 = c->literals[c->watch2];
+        int lit1 = clauses[i].literals[clause->watch1];
+        int lit2 = clause->literals[clause->watch2];
 
         int v1 = abs(lit1) - 1;
         int v2 = abs(lit2) - 1;
 
         if (lit1 > 0)
-            watchlist_add(&db->pos[v1], c);
+            watchlist_add(&db->pos[v1], clause);
         else
-            watchlist_add(&db->neg[v1], c);
+            watchlist_add(&db->neg[v1], clause);
 
         if (lit2 > 0)
-            watchlist_add(&db->pos[v2], c);
+            watchlist_add(&db->pos[v2], clause);
         else
-            watchlist_add(&db->neg[v2], c);
+            watchlist_add(&db->neg[v2], clause);
     }
 }
 
-void move_watch(WatchDB *db, int old_lit, int new_lit, CDCL_Clause *c)
+void move_watch(WatchDB *db, int old_lit, int new_lit, CDCL_Clause *clause)
 {
     int ov = abs(old_lit) - 1;
     int nv = abs(new_lit) - 1;
 
     // remove old
     if (old_lit > 0)
-        watchlist_remove(&db->pos[ov], c);
+        watchlist_remove(&db->pos[ov], clause);
     else
-        watchlist_remove(&db->neg[ov], c);
+        watchlist_remove(&db->neg[ov], clause);
 
     // add new
     if (new_lit > 0)
-        watchlist_add(&db->pos[nv], c);
+        watchlist_add(&db->pos[nv], clause);
     else
-        watchlist_add(&db->neg[nv], c);
+        watchlist_add(&db->neg[nv], clause);
 }

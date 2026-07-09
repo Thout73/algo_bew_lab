@@ -150,19 +150,27 @@ int apply_restart_policy() { return 0; } // for now false
 // for now random
 void decide(Assignment *assignment, Trail *trail, int decision_lvl, int number_of_variables)
 {
+
+    double max_counter = -1;
+    int max_counter_index = -1;
     for (int i = 0; i < number_of_variables; i++)
     {
         if (assignment[i].value == UNASSIGNED)
         {
-
-            assignment[i].value = (rand() % 2 == 0) ? TRUE : FALSE;
-            assignment[i].decision_lvl = decision_lvl;
-            assignment[i].reason = NULL;
-
-            trail_push(trail, i, assignment[i].value, NULL, decision_lvl);
-            return;
+            if (assignment[i].vsids_counter >= max_counter)
+            {
+                max_counter = assignment[i].vsids_counter;
+                max_counter_index = i;
+            }
         }
     }
+
+    assignment[max_counter_index].value = (rand() % 2 == 0) ? TRUE : FALSE;
+    assignment[max_counter_index].decision_lvl = decision_lvl;
+    assignment[max_counter_index].reason = NULL;
+
+    trail_push(trail, max_counter_index, assignment[max_counter_index].value, NULL, decision_lvl);
+    return;
 }
 
 int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
@@ -216,6 +224,7 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
             }
             CDCL_Clause *learned_clause = analyse_conflict(&trail, &learned, watchDB, &next_claus_id, assignment, confl_clause, &backtrack_level, &UIP_lit, number_of_variables, decision_lvl);
             backtrack(backtrack_level, &trail, assignment);
+            trail.b = trail.b * c;
             decision_lvl = backtrack_level;
 
             int UIP_var = abs(UIP_lit) - 1;

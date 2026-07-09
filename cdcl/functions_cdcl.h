@@ -2,6 +2,8 @@
 #define TRAIL_H
 #include <stddef.h>
 
+#define c 1.05
+
 typedef struct
 {
     int size;
@@ -17,6 +19,7 @@ typedef struct
     int value;
     CDCL_Clause *reason;
     int decision_lvl;
+    double vsids_counter;
 } Assignment;
 
 typedef struct
@@ -24,6 +27,7 @@ typedef struct
     Assignment *data;
     size_t size;
     size_t capacity;
+    double b;
 } Trail;
 
 typedef struct
@@ -66,9 +70,9 @@ void build_watchdb(WatchDB *db, CDCL_Clause *clauses, int n_clauses);
 
 WatchDB *watchdb_init(int num_vars);
 
-void move_watch(WatchDB *db, int old_lit, int new_lit, CDCL_Clause *c);
+void move_watch(WatchDB *db, int old_lit, int new_lit, CDCL_Clause *clause);
 
-void watchlist_add(WatchList *wl, CDCL_Clause *c);
+void watchlist_add(WatchList *wl, CDCL_Clause *clause);
 
 CDCL_Clause *parse(char *file_str, int *number_of_variables, int *number_of_clauses, int *maximum_length);
 
