@@ -53,6 +53,11 @@ void build_watchdb(WatchDB *db, CDCL_Clause *clauses, int n_clauses)
     {
         CDCL_Clause *clause = &clauses[i];
 
+        if (clause->size <= 1)
+        {
+            continue;
+        }
+
         int lit1 = clauses[i].literals[clause->watch1];
         int lit2 = clause->literals[clause->watch2];
 

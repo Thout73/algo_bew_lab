@@ -4,10 +4,6 @@
 #include <time.h>
 #include "functions_cdcl.h"
 
-#define UNASSIGNED 0
-#define FALSE -1
-#define TRUE 1
-
 int sign(int x)
 {
     if (x < 0)
@@ -90,11 +86,6 @@ CDCL_Clause *Unitpropagation(CDCL_Clause *clauses, int number_of_clauses, Trail 
                 curr->watch2 = active_watch;
             }
 
-            if (curr->watch1 == curr->watch2)
-            {
-                printf("%d, %d\n", curr->id, decision_lvl);
-            }
-
             // no further unassigend
             if (active_watch == old_watch)
             {
@@ -106,6 +97,7 @@ CDCL_Clause *Unitpropagation(CDCL_Clause *clauses, int number_of_clauses, Trail 
                     assignment[abs(curr_lit) - 1].value = sign(curr_lit);
                     assignment[abs(curr_lit) - 1].decision_lvl = decision_lvl;
                     assignment[abs(curr_lit) - 1].reason = curr;
+                    assignment[abs(curr_lit) - 1].old_value = sign(curr_lit);
 
                     trail_push(trail, abs(curr_lit) - 1, sign(curr_lit), curr, decision_lvl);
                 }
@@ -147,7 +139,6 @@ int backtrack(int target_lvl, Trail *trail, Assignment *assignment)
 }
 int apply_restart_policy() { return 0; } // for now false
 
-// for now random
 void decide(Assignment *assignment, Trail *trail, int decision_lvl, int number_of_variables)
 {
 
@@ -165,7 +156,15 @@ void decide(Assignment *assignment, Trail *trail, int decision_lvl, int number_o
         }
     }
 
-    assignment[max_counter_index].value = (rand() % 2 == 0) ? TRUE : FALSE;
+    if (assignment[max_counter_index].old_value != 0)
+    {
+        assignment[max_counter_index].value = assignment[max_counter_index].old_value;
+    }
+    else
+    {
+        assignment[max_counter_index].value = -1;
+    }
+    assignment[max_counter_index].old_value = assignment[max_counter_index].value;
     assignment[max_counter_index].decision_lvl = decision_lvl;
     assignment[max_counter_index].reason = NULL;
 
@@ -183,6 +182,7 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
         assignment[i].literal = i;
         assignment[i].value = UNASSIGNED;
         assignment[i].reason = NULL;
+        assignment[i].old_value = 0;
     }
     Trail trail;
     trail_init(&trail);
@@ -209,6 +209,7 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
             assignment[var].value = sign(lit);
             assignment[var].decision_lvl = decision_lvl;
             assignment[var].reason = NULL;
+            assignment[var].vsids_counter = 0;
             trail_push(&trail, var, sign(lit), NULL, decision_lvl);
         }
     }

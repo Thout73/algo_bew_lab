@@ -4,6 +4,10 @@
 
 #define c 1.05
 
+#define UNASSIGNED 0
+#define FALSE -1
+#define TRUE 1
+
 typedef struct
 {
     int size;
@@ -20,6 +24,7 @@ typedef struct
     CDCL_Clause *reason;
     int decision_lvl;
     double vsids_counter;
+    int old_value;
 } Assignment;
 
 typedef struct
