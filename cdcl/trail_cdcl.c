@@ -6,6 +6,7 @@ void trail_init(Trail *trail)
 {
     trail->size = 0;
     trail->capacity = 16;
+    trail->b = 1;
 
     trail->data = malloc(trail->capacity * sizeof(Assignment));
 
