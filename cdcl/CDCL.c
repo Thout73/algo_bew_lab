@@ -11,6 +11,29 @@ int sign(int x)
     return 1;
 }
 
+int getLubyElement(int n)
+{
+    while (1)
+    {
+        // Prüfen, ob n von der Form 2^k - 1 ist
+        if ((n & (n + 1)) == 0)
+        {
+            // Wenn ja, ist das Element gleich (n + 1) / 2
+            return (n + 1) / 2;
+        }
+
+        // Finde die größte Zweierpotenz kleiner als n
+        int k = 1;
+        while (k * 2 - 1 < n)
+        {
+            k *= 2;
+        }
+
+        // Reduziere n auf das entsprechende Element im vorherigen Block
+        n = n - (k - 1);
+    }
+}
+
 CDCL_Clause *Unitpropagation(CDCL_Clause *clauses, int number_of_clauses, Trail *trail, WatchDB *watch_DB, Assignment *assignment, int decision_lvl, int start_qhead)
 {
     int qhead = start_qhead;
@@ -138,8 +161,6 @@ int backtrack(int target_lvl, Trail *trail, Assignment *assignment)
     return target_lvl;
 }
 
-int apply_restart_policy() { return 0; } // for now false
-
 void decide(Assignment *assignment, Trail *trail, int decision_lvl, int number_of_variables)
 {
 
@@ -200,6 +221,10 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
 
     int trail_lvl = 0;
 
+    int restart_after = 25;
+    int num_of_restarts = 0;
+    int num_of_confl = 0;
+
     // decide all unit clauses
     for (int i = 0; i < number_of_clauses; i++)
     {
@@ -220,6 +245,7 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
         CDCL_Clause *confl_clause = Unitpropagation(clauses, number_of_clauses, &trail, watchDB, assignment, decision_lvl, trail_lvl);
         while (confl_clause != NULL)
         {
+            num_of_confl++;
             if (decision_lvl == 0)
             {
                 return 0;
@@ -248,11 +274,19 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
             printf("\n");
             return 1;
         }
-        // int restart = apply_restart_policy();
+
+        // restart
+        if (num_of_confl > restart_after)
+        {
+            num_of_restarts++;
+            restart_after = getLubyElement(num_of_restarts) * 100;
+            num_of_confl = 0;
+            backtrack(0, &trail, assignment);
+        }
+
         decision_lvl++;
         decide(assignment, &trail, decision_lvl, number_of_variables);
         trail_lvl = trail.size - 1;
-        printf("DECIDE lvl=%d: var=%d val=%d\n", decision_lvl, trail.data[trail.size - 1].literal + 1, trail.data[trail.size - 1].value);
     }
 }
 
