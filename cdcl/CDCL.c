@@ -31,7 +31,7 @@ CDCL_Clause *Unitpropagation(CDCL_Clause *clauses, int number_of_clauses, Trail 
         }
 
         int i = 0;
-        while (i < current_clauses->size && current_clauses->data[i]->size > 1)
+        while (i < current_clauses->size)
         {
             curr = current_clauses->data[i];
             // set watches
@@ -137,6 +137,7 @@ int backtrack(int target_lvl, Trail *trail, Assignment *assignment)
 
     return target_lvl;
 }
+
 int apply_restart_policy() { return 0; } // for now false
 
 void decide(Assignment *assignment, Trail *trail, int decision_lvl, int number_of_variables)

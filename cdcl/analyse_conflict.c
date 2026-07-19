@@ -5,20 +5,17 @@
 
 void sorted_insert_unique(int *list, int *size, int value)
 {
-    // Binaere Suche nach der Einfuegeposition
     int lo = 0, hi = *size;
     while (lo < hi)
     {
         int mid = (lo + hi) / 2;
         if (abs(list[mid]) == abs(value))
-            return; // bereits vorhanden, nichts tun
+            return;
         if (abs(list[mid]) < abs(value))
             lo = mid + 1;
         else
             hi = mid;
     }
-    // lo ist jetzt die Einfuegeposition
-    // alles ab lo um eine Stelle nach rechts schieben
     for (int i = *size; i > lo; i--)
         list[i] = list[i - 1];
     list[lo] = value;
@@ -57,58 +54,52 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
 {
     int *learned_lits = malloc(num_vars * sizeof(int));
     int learned_size = 0;
-
-    int *learn_queue = calloc(num_vars, sizeof(int));
-    int learn_queue_head = 0;
-    int learn_queue_size = 0;
-
     int *seen = calloc(num_vars, sizeof(int));
 
-    for (int i = 0; i < confl->size; i++)
-    {
-        int lit = confl->literals[i];
-        int var = abs(lit) - 1;
-        assignment[var].vsids_counter += trail->b;
-        if (seen[var] == 1)
-            continue;
-        seen[var] = 1;
-        if (assignment[var].decision_lvl == decision_lvl)
-            learn_queue[learn_queue_size++] = lit;
-        else
-            sorted_insert_unique(learned_lits, &learned_size, lit);
-    }
+    int path_count = 0;
+    int trail_idx = (int)trail->size - 1;
+    CDCL_Clause *reason_clause = confl;
+    int p_var = -1; /* variable just resolved on; -1 for the first pass (confl itself) */
 
-    while (learn_queue_size - learn_queue_head != 1)
+    while (1)
     {
-        int curr_lit = learn_queue[learn_queue_head++];
-        int curr_var = abs(curr_lit) - 1;
-        CDCL_Clause *curr_reason = assignment[curr_var].reason;
-
-        if (curr_reason != NULL)
+        for (int i = 0; i < reason_clause->size; i++)
         {
-            for (int i = 0; i < curr_reason->size; i++)
-            {
-                int lit = curr_reason->literals[i];
-                int var = abs(lit) - 1;
+            int lit = reason_clause->literals[i];
+            int var = abs(lit) - 1;
 
-                if (var == curr_var)
-                    continue;
-                if (seen[var] == 1)
-                    continue;
+            if (var == p_var)
+                continue; /* this is the literal we are resolving away */
+            if (seen[var])
+                continue;
 
-                seen[var] = 1;
+            seen[var] = 1;
+            assignment[var].vsids_counter += trail->b;
 
-                if (assignment[var].decision_lvl == decision_lvl)
-                    learn_queue[learn_queue_size++] = lit;
-                else
-                    sorted_insert_unique(learned_lits, &learned_size, lit);
-            }
+            if (assignment[var].decision_lvl == decision_lvl)
+                path_count++;
+            else
+                sorted_insert_unique(learned_lits, &learned_size, lit);
         }
+
+        /* find the next 'seen' variable, scanning the trail from the top down */
+        while (trail_idx >= 0 && !seen[trail->data[trail_idx].literal])
+            trail_idx--;
+
+        p_var = trail->data[trail_idx].literal;
+        path_count--;
+        trail_idx--;
+
+        if (path_count == 0)
+            break; /* p_var is the first UIP */
+
+        reason_clause = assignment[p_var].reason;
     }
 
-    // UIP selbst noch hinzufügen
-    sorted_insert_unique(learned_lits, &learned_size, learn_queue[learn_queue_head]);
-    *UIP_lit = learn_queue[learn_queue_head];
+    /* UIP literal, expressed the same way literals are stored in clauses
+     * (i.e. as the "false under current assignment" polarity) */
+    *UIP_lit = -assignment[p_var].value * (p_var + 1);
+    sorted_insert_unique(learned_lits, &learned_size, *UIP_lit);
 
     CDCL_Clause *new_clause = malloc(sizeof(CDCL_Clause));
     new_clause->literals = malloc(learned_size * sizeof(int));
@@ -116,12 +107,10 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
     new_clause->id = (*next_clause_id)++;
     memcpy(new_clause->literals, learned_lits, learned_size * sizeof(int));
     free(learned_lits);
-    free(learn_queue);
     free(seen);
 
     if (learned_size == 1)
     {
-        // print new clause
         printf("LEARN: ");
         for (int i = 0; i < new_clause->size; i++)
         {
@@ -174,7 +163,6 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
             watchlist_add(&watch_DB->neg[v2], new_clause);
     }
 
-    // print new clause
     printf("LEARN: ");
     for (int i = 0; i < new_clause->size; i++)
     {
