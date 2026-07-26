@@ -34,7 +34,7 @@ int getLubyElement(int n)
     }
 }
 
-CDCL_Clause *Unitpropagation(CDCL_Clause *clauses, int number_of_clauses, Trail *trail, WatchDB *watch_DB, Assignment *assignment, int decision_lvl, int start_qhead)
+CDCL_Clause *Unitpropagation(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables, Trail *trail, WatchDB *watch_DB, Assignment *assignment, int decision_lvl, int start_qhead)
 {
     int qhead = start_qhead;
     while (qhead < trail->size && trail->size > 0)
@@ -123,6 +123,16 @@ CDCL_Clause *Unitpropagation(CDCL_Clause *clauses, int number_of_clauses, Trail 
                     assignment[abs(curr_lit) - 1].old_value = sign(curr_lit);
 
                     trail_push(trail, abs(curr_lit) - 1, sign(curr_lit), curr, decision_lvl);
+
+                    // calc new lbd
+                    if (curr->literal_block_distance != 0)
+                    {
+                        int new_lbd = calc_lbd(curr, assignment, number_of_variables);
+                        if (curr->literal_block_distance > new_lbd)
+                        {
+                            curr->literal_block_distance = new_lbd;
+                        }
+                    }
                 }
                 else
                 {
@@ -225,6 +235,9 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
     int num_of_restarts = 0;
     int num_of_confl = 0;
 
+    int delete_after = 2000;
+    int delete_step = 500;
+
     // decide all unit clauses
     for (int i = 0; i < number_of_clauses; i++)
     {
@@ -242,7 +255,7 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
 
     while (1)
     {
-        CDCL_Clause *confl_clause = Unitpropagation(clauses, number_of_clauses, &trail, watchDB, assignment, decision_lvl, trail_lvl);
+        CDCL_Clause *confl_clause = Unitpropagation(clauses, number_of_clauses, number_of_variables, &trail, watchDB, assignment, decision_lvl, trail_lvl);
         while (confl_clause != NULL)
         {
             num_of_confl++;
@@ -261,7 +274,7 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
             assignment[UIP_var].reason = learned_clause;
             trail_push(&trail, UIP_var, sign(UIP_lit), learned_clause, decision_lvl);
             trail_lvl = trail.size - 1;
-            confl_clause = Unitpropagation(clauses, number_of_clauses, &trail, watchDB, assignment, decision_lvl, trail_lvl);
+            confl_clause = Unitpropagation(clauses, number_of_clauses, number_of_variables, &trail, watchDB, assignment, decision_lvl, trail_lvl);
         }
         if (trail.size == number_of_variables)
         {
@@ -282,6 +295,35 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
             restart_after = getLubyElement(num_of_restarts) * 100;
             num_of_confl = 0;
             backtrack(0, &trail, assignment);
+            decision_lvl = 0;
+            printf("RESTART, %d\n", num_of_restarts);
+        }
+
+        // delte clauses
+        if (num_of_confl > delete_after)
+        {
+            delete_after += delete_step;
+            int sum_of_lbd = 0;
+            for (int i = 0; i < learned.size; i++)
+            {
+                sum_of_lbd += learned.data[i]->literal_block_distance;
+            }
+            int median = sum_of_lbd / learned.size;
+            int num_of_del = 0;
+            int num_of_all = learned.size;
+            for (int i = 0; i < learned.size; i++)
+            {
+                CDCL_Clause *curr = learned.data[i];
+                if (median < curr->literal_block_distance)
+                {
+                    learned_delete(&learned, i);
+                    i--;
+                    watchlist_remove(watchDB->neg, curr);
+                    watchlist_remove(watchDB->pos, curr);
+                    num_of_del++;
+                }
+            }
+            printf("Deleted %d of %d\n", num_of_del, num_of_all);
         }
 
         decision_lvl++;

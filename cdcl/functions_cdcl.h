@@ -15,6 +15,7 @@ typedef struct
     int *literals;
     int watch1;
     int watch2;
+    int literal_block_distance;
 } CDCL_Clause;
 
 typedef struct
@@ -56,7 +57,14 @@ typedef struct
 } LearnedClauses;
 
 void learned_init(LearnedClauses *lc);
+
 CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *watch_DB, int *next_clause_id, Assignment *assignment, CDCL_Clause *confl, int *backtrack_level, int *UIP_lit, int num_vars, int decision_lvl);
+
+int calc_lbd(CDCL_Clause *clause, Assignment *assignment, int decision_lvl);
+
+void learned_delete(LearnedClauses *lc, int index);
+
+void watchlist_remove(WatchList *wl, CDCL_Clause *clause);
 
 void trail_init(Trail *trail);
 

@@ -42,6 +42,26 @@ void sorted_delete(int *list, int *size, int value)
     }
 }
 
+int calc_lbd(CDCL_Clause *clause, Assignment *assignment, int num_of_var)
+{
+    int lbd = 0;
+    int *seen = calloc(num_of_var + 1, sizeof(int));
+    for (int i = 0; i < clause->size; i++)
+    {
+        int lit = clause->literals[i];
+        int var = abs(lit) - 1;
+        if (assignment[var].decision_lvl < 0)
+            continue;
+        if (!seen[assignment[var].decision_lvl])
+        {
+            lbd++;
+            seen[assignment[var].decision_lvl] = 1;
+        }
+    }
+    free(seen);
+    return lbd;
+}
+
 void learned_init(LearnedClauses *lc)
 {
     lc->size = 0;
@@ -68,6 +88,12 @@ static void learned_add(LearnedClauses *lc, CDCL_Clause *clause)
         lc->data = tmp;
     }
     lc->data[lc->size++] = clause;
+}
+
+void learned_delete(LearnedClauses *lc, int index)
+{
+    lc->size--;
+    lc->data[index] = lc->data[lc->size];
 }
 
 CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *watch_DB, int *next_clause_id, Assignment *assignment, CDCL_Clause *confl, int *backtrack_level, int *UIP_lit, int num_vars, int decision_lvl)
@@ -103,7 +129,7 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
         }
 
         /* find the next 'seen' variable, scanning the trail from the top down */
-        while (/*trail_idx >= 0 */ !seen[trail->data[trail_idx].literal])
+        while (trail_idx >= 0 && !seen[trail->data[trail_idx].literal])
             trail_idx--;
 
         p_var = trail->data[trail_idx].literal;
@@ -135,7 +161,6 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
             while (minimize_head < minimize_size && !over)
             {
                 int var = minimize_stack[minimize_head];
-                minimize_seen[var] = 1;
                 for (int j = 0; j < assignment[var].reason->size && !over; j++)
                 {
                     int new_lit = assignment[var].reason->literals[j];
@@ -146,12 +171,11 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
                     }
                     else
                     {
-                        if (assignment[new_var].reason != NULL)
+                        if (assignment[new_var].reason != NULL && !minimize_seen[new_var])
                         {
-                            if (!minimize_seen[new_var])
-                            {
-                                minimize_stack[minimize_size++] = new_var;
-                            }
+
+                            minimize_seen[new_var] = 1;
+                            minimize_stack[minimize_size++] = new_var;
                         }
                         else
                         {
@@ -180,6 +204,8 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
     memcpy(new_clause->literals, learned_lits, learned_size * sizeof(int));
     free(learned_lits);
     free(seen);
+
+    new_clause->literal_block_distance = calc_lbd(new_clause, assignment, num_vars);
 
     if (learned_size == 1)
     {
@@ -235,12 +261,12 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
             watchlist_add(&watch_DB->neg[v2], new_clause);
     }
 
-    printf("LEARN: ");
-    for (int i = 0; i < new_clause->size; i++)
-    {
-        printf("%d ", new_clause->literals[i]);
-    }
-    printf("Decisionlvl: %d Backtrack: %d\n", decision_lvl, *backtrack_level);
+    // printf("LEARN: ");
+    // for (int i = 0; i < new_clause->size; i++)
+    // {
+    //     printf("%d ", new_clause->literals[i]);
+    // }
+    // printf("Decisionlvl: %d Backtrack: %d LBD: %d\n", decision_lvl, *backtrack_level, new_clause->literal_block_distance);
 
     return new_clause;
 }
