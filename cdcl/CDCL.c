@@ -11,6 +11,37 @@ int sign(int x)
     return 1;
 }
 
+static int clause_cmp_lbd_desc(const void *a, const void *b)
+{
+    CDCL_Clause *ca = *(CDCL_Clause *const *)a;
+    CDCL_Clause *cb = *(CDCL_Clause *const *)b;
+    return cb->literal_block_distance - ca->literal_block_distance; // absteigend
+}
+
+static int is_locked(CDCL_Clause *clause, Assignment *assignment)
+{
+    int v1 = abs(clause->literals[clause->watch1]) - 1;
+    int v2 = abs(clause->literals[clause->watch2]) - 1;
+    return assignment[v1].reason == clause || assignment[v2].reason == clause;
+}
+
+static void remove_from_watchlists(WatchDB *watch_DB, CDCL_Clause *clause)
+{
+    int lit1 = clause->literals[clause->watch1];
+    int v1 = abs(lit1) - 1;
+    if (lit1 > 0)
+        watchlist_remove(&watch_DB->pos[v1], clause);
+    else
+        watchlist_remove(&watch_DB->neg[v1], clause);
+
+    int lit2 = clause->literals[clause->watch2];
+    int v2 = abs(lit2) - 1;
+    if (lit2 > 0)
+        watchlist_remove(&watch_DB->pos[v2], clause);
+    else
+        watchlist_remove(&watch_DB->neg[v2], clause);
+}
+
 int getLubyElement(int n)
 {
     while (1)
@@ -235,7 +266,7 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
     int num_of_restarts = 0;
     int num_of_confl = 0;
 
-    int delete_after = 2000;
+    int delete_after = 3000;
     int delete_step = 500;
 
     // decide all unit clauses
@@ -299,31 +330,30 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
             printf("RESTART, %d\n", num_of_restarts);
         }
 
-        // delte clauses
-        if (num_of_confl > delete_after)
+        // delete clauses
+        if (learned.size > delete_after)
         {
             delete_after += delete_step;
-            int sum_of_lbd = 0;
-            for (int i = 0; i < learned.size; i++)
-            {
-                sum_of_lbd += learned.data[i]->literal_block_distance;
-            }
-            int median = sum_of_lbd / learned.size;
-            int num_of_del = 0;
+
+            qsort(learned.data, learned.size, sizeof(CDCL_Clause *), clause_cmp_lbd_desc);
+
             int num_of_all = learned.size;
-            for (int i = 0; i < learned.size; i++)
+            int target = num_of_all / 2;
+            int num_of_del = 0;
+
+            for (int i = target - 1; i >= 0; i--)
             {
                 CDCL_Clause *curr = learned.data[i];
-                if (median < curr->literal_block_distance)
-                {
-                    learned_delete(&learned, i);
-                    i--;
-                    watchlist_remove(watchDB->neg, curr);
-                    watchlist_remove(watchDB->pos, curr);
-                    num_of_del++;
-                }
+
+                if (is_locked(curr, assignment))
+                    continue; // aktiv als reason genutzt -> nicht anfassen
+
+                remove_from_watchlists(watchDB, curr);
+                free(curr->literals);
+                free(curr);
+                learned_delete(&learned, i);
+                num_of_del++;
             }
-            printf("Deleted %d of %d\n", num_of_del, num_of_all);
         }
 
         decision_lvl++;
