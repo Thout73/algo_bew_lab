@@ -96,6 +96,20 @@ void learned_delete(LearnedClauses *lc, int index)
     lc->data[index] = lc->data[lc->size];
 }
 
+void learned_destroy(LearnedClauses *lc)
+{
+    for (int i = 0; i < lc->size; i++)
+    {
+        free(lc->data[i]->literals);
+        free(lc->data[i]);
+    }
+    free(lc->data);
+
+    lc->data = NULL;
+    lc->size = 0;
+    lc->capacity = 0;
+}
+
 CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *watch_DB, int *next_clause_id, Assignment *assignment, CDCL_Clause *confl, int *backtrack_level, int *UIP_lit, int num_vars, int decision_lvl)
 {
     int *learned_lits = malloc(num_vars * sizeof(int));
@@ -105,7 +119,7 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
     int path_count = 0;
     int trail_idx = (int)trail->size - 1;
     CDCL_Clause *reason_clause = confl;
-    int p_var = -1; /* variable just resolved on; -1 for the first pass (confl itself) */
+    int p_var = -1;
 
     while (1)
     {
@@ -115,7 +129,7 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
             int var = abs(lit) - 1;
 
             if (var == p_var)
-                continue; /* this is the literal we are resolving away */
+                continue;
             if (seen[var])
                 continue;
 
@@ -128,7 +142,6 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
                 sorted_insert_unique(learned_lits, &learned_size, lit);
         }
 
-        /* find the next 'seen' variable, scanning the trail from the top down */
         while (trail_idx >= 0 && !seen[trail->data[trail_idx].literal])
             trail_idx--;
 
@@ -137,7 +150,7 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
         trail_idx--;
 
         if (path_count == 0)
-            break; /* p_var is the first UIP */
+            break; // found UIP
 
         reason_clause = assignment[p_var].reason;
     }
@@ -196,6 +209,7 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
         }
     }
     free(minimize_stack);
+    free(minimize_seen);
 
     CDCL_Clause *new_clause = malloc(sizeof(CDCL_Clause));
     new_clause->literals = malloc(learned_size * sizeof(int));
@@ -215,6 +229,7 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
         //    printf("%d ", new_clause->literals[i]);
         //}
         // printf("Decisionlvl: %d Backtrack: %d\n", decision_lvl, *backtrack_level);
+        learned_add(learned, new_clause);
         *backtrack_level = 0;
         return new_clause;
     }

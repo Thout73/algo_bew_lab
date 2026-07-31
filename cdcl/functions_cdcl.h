@@ -64,6 +64,8 @@ int calc_lbd(CDCL_Clause *clause, Assignment *assignment, int decision_lvl);
 
 void learned_delete(LearnedClauses *lc, int index);
 
+void learned_destroy(LearnedClauses *lc);
+
 void watchlist_remove(WatchList *wl, CDCL_Clause *clause);
 
 void trail_init(Trail *trail);
@@ -86,6 +88,8 @@ WatchDB *watchdb_init(int num_vars);
 void move_watch(WatchDB *db, int old_lit, int new_lit, CDCL_Clause *clause);
 
 void watchlist_add(WatchList *wl, CDCL_Clause *clause);
+
+void watchdb_destroy(WatchDB *db, int num_vars);
 
 CDCL_Clause *parse(char *file_str, int *number_of_variables, int *number_of_clauses, int *maximum_length);
 

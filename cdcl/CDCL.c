@@ -42,7 +42,7 @@ static void remove_from_watchlists(WatchDB *watch_DB, CDCL_Clause *clause)
         watchlist_remove(&watch_DB->neg[v2], clause);
 }
 
-int getLubyElement(int n)
+static int getLubyElement(int n)
 {
     while (1)
     {
@@ -262,7 +262,7 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
 
     int trail_lvl = 0;
 
-    int restart_after = 25;
+    int restart_after = 200;
     int num_of_restarts = 0;
     int num_of_confl = 0;
 
@@ -292,6 +292,12 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
             num_of_confl++;
             if (decision_lvl == 0)
             {
+                // free memory
+                free(assignment);
+                trail_destroy(&trail);
+                learned_destroy(&learned);
+                watchdb_destroy(watchDB, number_of_variables);
+
                 return 0;
             }
             CDCL_Clause *learned_clause = analyse_conflict(&trail, &learned, watchDB, &next_claus_id, assignment, confl_clause, &backtrack_level, &UIP_lit, number_of_variables, decision_lvl);
@@ -316,6 +322,13 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
                 printf("%d ", assignment[i].value * (i + 1));
             }
             printf("\n");
+
+            // free memory
+            free(assignment);
+            trail_destroy(&trail);
+            learned_destroy(&learned);
+            watchdb_destroy(watchDB, number_of_variables);
+
             return 1;
         }
 
@@ -366,10 +379,15 @@ int main(int argc, char *argv[])
 {
     int number_of_variables, number_of_clauses, maximum_length;
 
-    CDCL_Clause *clauses = parse("debug.cnf", &number_of_variables, &number_of_clauses, &maximum_length);
+    CDCL_Clause *clauses = parse("./cdcl/debug.cnf", &number_of_variables, &number_of_clauses, &maximum_length);
 
     int result = CDCL(clauses, number_of_clauses, number_of_variables);
     printf("%d\n", result);
+
+    for (int i = 0; i < number_of_clauses; i++)
+    {
+        free(clauses[i].literals);
+    }
 
     free(clauses);
 

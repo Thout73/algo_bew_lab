@@ -23,6 +23,32 @@ WatchDB *watchdb_init(int num_vars)
     return db;
 }
 
+void watchdb_destroy(WatchDB *db, int num_vars)
+{
+    if (db == NULL)
+        return;
+
+    if (db->pos != NULL)
+    {
+        for (int i = 0; i < num_vars; i++)
+        {
+            free(db->pos[i].data);
+        }
+        free(db->pos);
+    }
+
+    if (db->neg != NULL)
+    {
+        for (int i = 0; i < num_vars; i++)
+        {
+            free(db->neg[i].data);
+        }
+        free(db->neg);
+    }
+
+    free(db);
+}
+
 void watchlist_add(WatchList *wl, CDCL_Clause *clause)
 {
     if (wl->size == wl->cap)
