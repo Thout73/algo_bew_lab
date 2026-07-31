@@ -237,6 +237,8 @@ void decide(Assignment *assignment, Trail *trail, int decision_lvl, int number_o
 
 int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
 {
+    FILE *proof_log = fopen("./cdcl/proof_log.cnf", "a");
+
     int decision_lvl = 0;
     Assignment *assignment = malloc(sizeof(Assignment) * number_of_variables);
     for (int i = 0; i < number_of_variables; i++)
@@ -298,9 +300,20 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
                 learned_destroy(&learned);
                 watchdb_destroy(watchDB, number_of_variables);
 
+                fprintf(proof_log, "0");
+
+                fclose(proof_log);
+
                 return 0;
             }
             CDCL_Clause *learned_clause = analyse_conflict(&trail, &learned, watchDB, &next_claus_id, assignment, confl_clause, &backtrack_level, &UIP_lit, number_of_variables, decision_lvl);
+            // proof log
+            for (int i = 0; i < learned_clause->size; i++)
+            {
+                fprintf(proof_log, "%d ", learned_clause->literals[i]);
+            }
+            fprintf(proof_log, "0 \n");
+
             backtrack(backtrack_level, &trail, assignment);
             trail.b = trail.b * c;
             decision_lvl = backtrack_level;
@@ -328,6 +341,8 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
             trail_destroy(&trail);
             learned_destroy(&learned);
             watchdb_destroy(watchDB, number_of_variables);
+
+            fclose(proof_log);
 
             return 1;
         }
@@ -360,6 +375,13 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
 
                 if (is_locked(curr, assignment))
                     continue; // aktiv als reason genutzt -> nicht anfassen
+
+                fprintf(proof_log, "d ");
+                for (int j = 0; j < curr->size; j++)
+                {
+                    fprintf(proof_log, "%d ", curr->literals[j]);
+                }
+                fprintf(proof_log, "0 \n");
 
                 remove_from_watchlists(watchDB, curr);
                 free(curr->literals);

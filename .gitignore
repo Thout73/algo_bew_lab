@@ -4,3 +4,5 @@ env/
 cdcl/solver
 *.exe
 cdcl/debug.cnf
+cdcl/proof_log.cnf
+drat-trim-master/

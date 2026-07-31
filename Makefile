@@ -35,5 +35,8 @@ dpll_neu:
 	python plot_dpll.py
 
 cdcl:
-	gcc CDCL.c parse_cdcl_cnf.c watch_lst.c trail_cdcl.c -fsanitize=address -o cdcl.exe -O3
-	./cdcl.exe
+	gcc cdcl/CDCL.c cdcl/analyse_conflict.c cdcl/parse_cdcl_cnf.c cdcl/trail_cdcl.c cdcl/watch_lst.c cdcl/functions_cdcl.h -o cdcl/solver -fsanitize=address
+	./cdcl/solver
+
+cdcl_check:
+	./drat-trim-master/drat-trim ./cdcl/debug.cnf ./cdcl/proof_log.cnf
