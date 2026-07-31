@@ -8,7 +8,6 @@ test_env_2SAT:
 	./test.exe
 	python plot_graph_2SAT.py
 
-
 clean_exe:
 	rm -f *.exe
 
@@ -34,9 +33,11 @@ dpll_neu:
 	./dpll_run_neu.exe
 	python plot_dpll.py
 
+.PHONY: cdcl
+
 cdcl:
-	gcc cdcl/CDCL.c cdcl/analyse_conflict.c cdcl/parse_cdcl_cnf.c cdcl/trail_cdcl.c cdcl/watch_lst.c cdcl/functions_cdcl.h -o cdcl/solver -fsanitize=address
-	./cdcl/solver
+	gcc cdcl/CDCL.c cdcl/analyse_conflict.c cdcl/parse_cdcl_cnf.c cdcl/trail_cdcl.c cdcl/watch_lst.c -o cdcl/solver.exe -fsanitize=address
+	./cdcl/solver.exe
 
 cdcl_check:
 	./drat-trim-master/drat-trim ./cdcl/debug.cnf ./cdcl/proof_log.cnf

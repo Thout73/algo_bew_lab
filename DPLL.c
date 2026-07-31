@@ -264,10 +264,6 @@ int DPLL(int number_of_variables, int number_of_clauses, Clause *clauses)
     time_algorithm = (time_algorithm_end.tv_sec - time_algorithm_start.tv_sec) + (time_algorithm_end.tv_nsec - time_algorithm_start.tv_nsec) / 1e9;
 
     printf("Zeit gesamt: %f\nZeit unitprop: %f\n", time_algorithm, time_unitprop);
-    if (is_sat == 1)
-    {
-        print_arr(end_assignment, number_of_variables);
-    }
     free(assignment);
     free(end_assignment);
 

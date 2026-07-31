@@ -3,6 +3,7 @@ env/
 .vscode/
 cdcl/solver
 *.exe
+*.csv
 cdcl/debug.cnf
 cdcl/proof_log.cnf
 drat-trim-master/
