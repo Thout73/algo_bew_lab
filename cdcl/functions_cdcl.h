@@ -16,6 +16,7 @@ typedef struct
     int watch1;
     int watch2;
     int literal_block_distance;
+    int under_assumption;
 } CDCL_Clause;
 
 typedef struct
@@ -26,6 +27,7 @@ typedef struct
     int decision_lvl;
     double vsids_counter;
     int old_value;
+    int is_assumption;
 } Assignment;
 
 typedef struct
@@ -66,6 +68,8 @@ void learned_delete(LearnedClauses *lc, int index);
 
 void learned_destroy(LearnedClauses *lc);
 
+void learned_add(LearnedClauses *lc, CDCL_Clause *clause);
+
 void watchlist_remove(WatchList *wl, CDCL_Clause *clause);
 
 void trail_init(Trail *trail);
@@ -90,6 +94,22 @@ void move_watch(WatchDB *db, int old_lit, int new_lit, CDCL_Clause *clause);
 void watchlist_add(WatchList *wl, CDCL_Clause *clause);
 
 void watchdb_destroy(WatchDB *db, int num_vars);
+
+int sign(int x);
+
+int clause_cmp_lbd_desc(const void *a, const void *b);
+
+int is_locked(CDCL_Clause *clause, Assignment *assignment);
+
+void remove_from_watchlists(WatchDB *watch_DB, CDCL_Clause *clause);
+
+int getLubyElement(int n);
+
+CDCL_Clause *Unitpropagation(int number_of_clauses, int number_of_variables, Trail *trail, WatchDB *watch_DB, Assignment *assignment, int decision_lvl, int start_qhead);
+
+int backtrack(int target_lvl, Trail *trail, Assignment *assignment);
+
+void decide(Assignment *assignment, Trail *trail, int decision_lvl, int number_of_variables);
 
 CDCL_Clause *parse(char *file_str, int *number_of_variables, int *number_of_clauses, int *maximum_length);
 

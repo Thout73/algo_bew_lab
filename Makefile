@@ -36,8 +36,12 @@ dpll_neu:
 .PHONY: cdcl
 
 cdcl:
-	gcc cdcl/CDCL.c cdcl/analyse_conflict.c cdcl/parse_cdcl_cnf.c cdcl/trail_cdcl.c cdcl/watch_lst.c -o cdcl/solver.exe -fsanitize=address
+	gcc cdcl/CDCL.c cdcl/cdcl_help.c cdcl/analyse_conflict.c cdcl/parse_cdcl_cnf.c cdcl/trail_cdcl.c cdcl/watch_lst.c -o cdcl/solver.exe -fsanitize=address
 	./cdcl/solver.exe
 
 cdcl_check:
 	./drat-trim-master/drat-trim ./cdcl/debug.cnf ./cdcl/proof_log.cnf
+
+cdcl_inkremtell:
+	gcc cdcl/CDCL_inkremmentell.c cdcl/cdcl_help.c cdcl/analyse_conflict.c cdcl/parse_cdcl_cnf.c cdcl/trail_cdcl.c cdcl/watch_lst.c -o cdcl/solver_inkremmentell.exe -fsanitize=address
+	./cdcl/solver_inkremmentell.exe

@@ -45,6 +45,7 @@ CDCL_Clause *parse(char *file_str, int *number_of_variables, int *number_of_clau
         clauses[i].size = 0;
         clauses[i].id = i;
         clauses[i].literal_block_distance = 0;
+        clauses[i].under_assumption = 0;
     }
 
     /*

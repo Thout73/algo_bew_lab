@@ -74,7 +74,7 @@ void learned_init(LearnedClauses *lc)
     }
 }
 
-static void learned_add(LearnedClauses *lc, CDCL_Clause *clause)
+void learned_add(LearnedClauses *lc, CDCL_Clause *clause)
 {
     if (lc->size == lc->capacity)
     {
@@ -116,6 +116,8 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
     int learned_size = 0;
     int *seen = calloc(num_vars, sizeof(int));
 
+    int touched_assumption = 0;
+
     int path_count = 0;
     int trail_idx = (int)trail->size - 1;
     CDCL_Clause *reason_clause = confl;
@@ -132,6 +134,8 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
                 continue;
             if (seen[var])
                 continue;
+            if (assignment[var].is_assumption)
+                touched_assumption = 1;
 
             seen[var] = 1;
             assignment[var].vsids_counter += trail->b;
@@ -179,23 +183,19 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
                     int new_lit = assignment[var].reason->literals[j];
                     int new_var = abs(new_lit) - 1;
                     if (seen[new_var])
-                    {
                         continue;
+                    if (assignment[new_var].reason != NULL && !minimize_seen[new_var])
+                    {
+                        minimize_seen[new_var] = 1;
+                        minimize_stack[minimize_size++] = new_var;
+                        if (assignment[new_var].is_assumption)
+                            touched_assumption = 1;
                     }
                     else
                     {
-                        if (assignment[new_var].reason != NULL && !minimize_seen[new_var])
+                        if (assignment[new_var].decision_lvl != 0)
                         {
-
-                            minimize_seen[new_var] = 1;
-                            minimize_stack[minimize_size++] = new_var;
-                        }
-                        else
-                        {
-                            if (assignment[new_var].decision_lvl != 0)
-                            {
-                                over = 1;
-                            }
+                            over = 1;
                         }
                     }
                 }
@@ -215,6 +215,7 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
     new_clause->literals = malloc(learned_size * sizeof(int));
     new_clause->size = learned_size;
     new_clause->id = (*next_clause_id)++;
+    new_clause->under_assumption = touched_assumption;
     memcpy(new_clause->literals, learned_lits, learned_size * sizeof(int));
     free(learned_lits);
     free(seen);
