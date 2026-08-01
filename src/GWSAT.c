@@ -4,20 +4,6 @@
 #include <time.h>
 #include "functions_dpll_etc.h"
 
-typedef struct
-{
-    int value;
-
-    int *pos_clauses;
-    int pos_size;
-
-    int *neg_clauses;
-    int neg_size;
-
-    int make_score;
-    int break_score;
-} Variable;
-
 static int is_satisfied(int number_of_clauses, Clause *clauses)
 {
     for (int i = 0; i < number_of_clauses; i++)
@@ -29,7 +15,7 @@ static int is_satisfied(int number_of_clauses, Clause *clauses)
     }
     return 1;
 }
-static void update_clause(Clause *clause, Variable *assignment, int delta, int variable)
+static void update_clause(Clause *clause, Variable_GWSAT *assignment, int delta, int variable)
 {
     int old_count = clause->true_count;
     int new_count = old_count + delta;
@@ -76,7 +62,7 @@ static void update_clause(Clause *clause, Variable *assignment, int delta, int v
     }
 }
 
-static void flip_variable(int variable, Clause *clauses, Variable *assignment)
+static void flip_variable(int variable, Clause *clauses, Variable_GWSAT *assignment)
 {
     int old_value = assignment[variable].value;
 
@@ -101,19 +87,14 @@ static void flip_variable(int variable, Clause *clauses, Variable *assignment)
     assignment[variable].value = -old_value;
 }
 
-int GWSAT(int number_of_variables, int number_of_clauses, Clause *clauses, int max_tries, int max_steps, double propability)
+int GWSAT(int number_of_variables, int number_of_clauses, Clause *clauses, int max_tries, int max_steps, double propability, Variable_GWSAT *assignment)
 {
     srand(time(NULL));
     for (int iterations = 0; iterations < max_tries; iterations++)
     {
-
-        Variable *assignment = malloc(number_of_variables * sizeof(Variable));
-
         // random start assignment
         for (int i = 0; i < number_of_variables; i++)
         {
-            assignment[i].pos_clauses = malloc(number_of_clauses * sizeof(int));
-            assignment[i].neg_clauses = malloc(number_of_clauses * sizeof(int));
             assignment[i].pos_size = 0;
             assignment[i].neg_size = 0;
             assignment[i].make_score = 0;
@@ -177,15 +158,7 @@ int GWSAT(int number_of_variables, int number_of_clauses, Clause *clauses, int m
         }
         if (is_satisfied(number_of_clauses, clauses) == 1)
         {
-
-            for (int i = 0; i < number_of_variables; i++)
-            {
-                free(assignment[i].pos_clauses);
-                free(assignment[i].neg_clauses);
-            }
-
-            free(assignment);
-            return 1;
+            return 10;
         }
         for (int step = 0; step < max_steps; step++)
         {
@@ -226,24 +199,9 @@ int GWSAT(int number_of_variables, int number_of_clauses, Clause *clauses, int m
 
             if (is_satisfied(number_of_clauses, clauses) == 1)
             {
-
-                for (int i = 0; i < number_of_variables; i++)
-                {
-                    free(assignment[i].pos_clauses);
-                    free(assignment[i].neg_clauses);
-                }
-
-                free(assignment);
-                return 1;
+                return 10;
             }
         }
-        for (int i = 0; i < number_of_variables; i++)
-        {
-            free(assignment[i].pos_clauses);
-            free(assignment[i].neg_clauses);
-        }
-
-        free(assignment);
     }
     return 0;
 }

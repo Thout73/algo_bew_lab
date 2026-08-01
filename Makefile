@@ -1,22 +1,13 @@
 help:
 	echo "help"
 
-clean_exe:
-	rm -f *.exe
-
-clean_cnf:
-	rm *.cnf
-
-clean_csv:
-	rm *.csv
-
-clean:
-	make clean_csv
-	make clean_exe
-
 dpll:
 	@gcc src/run_dpll.c src/parse_cnf.c src/DPLL.c -o build/dpll_solver.exe -O3 -fsanitize=address
 	@./build/dpll_solver.exe
+
+gwsat:
+	@gcc src/run_gwsat.c src/parse_cnf.c src/GWSAT.c -o build/gwsat_solver.exe -O3 -fsanitize=address
+	@./build/gwsat_solver.exe
 
 .PHONY: cdcl
 
