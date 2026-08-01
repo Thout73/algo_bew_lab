@@ -151,8 +151,6 @@ void add_permanent_clause(char *args, WatchDB *watchDB, LearnedClauses *permanen
 
 int CDCL_inkrementell(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
 {
-    FILE *proof_log = fopen("./cdcl/proof_log.cnf", "a");
-
     int decision_lvl = 0;
     Assignment *assignment = malloc(sizeof(Assignment) * number_of_variables);
     for (int i = 0; i < number_of_variables; i++)
@@ -215,6 +213,7 @@ int CDCL_inkrementell(CDCL_Clause *clauses, int number_of_clauses, int number_of
             num_of_confl++;
             if (decision_lvl == 0)
             {
+                printf("s UNSATISFIABLE\nBeende...\n");
                 // free memory
                 free(assignment);
                 trail_destroy(&trail);
@@ -222,19 +221,9 @@ int CDCL_inkrementell(CDCL_Clause *clauses, int number_of_clauses, int number_of
                 learned_destroy(&permanent_clauses);
                 watchdb_destroy(watchDB, number_of_variables);
 
-                fprintf(proof_log, "0");
-
-                fclose(proof_log);
-
                 return 0;
             }
             CDCL_Clause *learned_clause = analyse_conflict(&trail, &learned, watchDB, &next_claus_id, assignment, confl_clause, &backtrack_level, &UIP_lit, number_of_variables, decision_lvl);
-            // proof log
-            for (int i = 0; i < learned_clause->size; i++)
-            {
-                fprintf(proof_log, "%d ", learned_clause->literals[i]);
-            }
-            fprintf(proof_log, "0 \n");
 
             backtrack(backtrack_level, &trail, assignment);
             trail.b = trail.b * c;
@@ -251,7 +240,8 @@ int CDCL_inkrementell(CDCL_Clause *clauses, int number_of_clauses, int number_of
         if (trail.size == number_of_variables)
         {
             // print assignment
-            printf("Assignment\n");
+            printf("s SATISFIABLE\n");
+            printf("v ");
             for (int i = 0; i < number_of_variables; i++)
             {
                 printf("%d ", assignment[i].value * (i + 1));
@@ -304,8 +294,6 @@ int CDCL_inkrementell(CDCL_Clause *clauses, int number_of_clauses, int number_of
                     learned_destroy(&learned);
                     learned_destroy(&permanent_clauses);
                     watchdb_destroy(watchDB, number_of_variables);
-
-                    fclose(proof_log);
 
                     return 1;
                 }
@@ -384,13 +372,6 @@ int CDCL_inkrementell(CDCL_Clause *clauses, int number_of_clauses, int number_of
                 if (is_locked(curr, assignment))
                     continue; // aktiv als reason genutzt -> nicht anfassen
 
-                fprintf(proof_log, "d ");
-                for (int j = 0; j < curr->size; j++)
-                {
-                    fprintf(proof_log, "%d ", curr->literals[j]);
-                }
-                fprintf(proof_log, "0 \n");
-
                 remove_from_watchlists(watchDB, curr);
                 free(curr->literals);
                 free(curr);
@@ -409,10 +390,9 @@ int main(int argc, char *argv[])
 {
     int number_of_variables, number_of_clauses, maximum_length;
 
-    CDCL_Clause *clauses = parse("./cdcl/debug.cnf", &number_of_variables, &number_of_clauses, &maximum_length);
+    CDCL_Clause *clauses = parse("./src/cdcl/debug.cnf", &number_of_variables, &number_of_clauses, &maximum_length);
 
     int result = CDCL_inkrementell(clauses, number_of_clauses, number_of_variables);
-    printf("%d\n", result);
 
     for (int i = 0; i < number_of_clauses; i++)
     {
@@ -423,10 +403,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-
-// TODOs
-// aufräumen
-// inkremmentell --> jetzt
-// testumgebung
-// readme
-// auswertung

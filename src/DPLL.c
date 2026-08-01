@@ -3,20 +3,8 @@
 #include <string.h>
 #include <time.h>
 #include "functions_dpll_etc.h"
-#include <linux/time.h>
 
-typedef struct
-{
-    int value;
-
-    int *pos_clauses;
-    int pos_size;
-
-    int *neg_clauses;
-    int neg_size;
-} Variable;
-
-int set_variable(Clause *clauses, Variable *assignment, int variable, int value)
+int set_variable(Clause *clauses, Variable_DPLL *assignment, int variable, int value)
 {
     if (value == 1)
     {
@@ -91,7 +79,7 @@ int set_variable(Clause *clauses, Variable *assignment, int variable, int value)
 }
 
 // 0 -> no change, 1 -> change, 2 -> UNSAT
-int pure_literal_elimination_neu(int number_of_variables, int number_of_clauses, Clause *clauses, Variable *assignment)
+int pure_literal_elimination_neu(int number_of_variables, int number_of_clauses, Clause *clauses, Variable_DPLL *assignment)
 {
     int *pure_status = malloc(number_of_variables * sizeof(int));
     memset(pure_status, 0, number_of_variables * sizeof(int));
@@ -147,7 +135,7 @@ int pure_literal_elimination_neu(int number_of_variables, int number_of_clauses,
 }
 
 // 0-> no changes, 1 -> changes, 2 -> unsat
-int unitpropagation_neu(int number_of_variables, int number_of_clauses, Clause *clauses, Variable *assignment)
+int unitpropagation_neu(int number_of_variables, int number_of_clauses, Clause *clauses, Variable_DPLL *assignment)
 {
     int done = 1;
     int change = 0;
@@ -185,7 +173,7 @@ int unitpropagation_neu(int number_of_variables, int number_of_clauses, Clause *
     return change;
 }
 
-int DPLL_HELP(int number_of_variables, int number_of_clauses, Clause *clauses, Variable *assignment, double *time_unit_prop)
+int DPLL_HELP(int number_of_variables, int number_of_clauses, Clause *clauses, Variable_DPLL *assignment, double *time_unit_prop)
 {
     int simplify_again;
     do
@@ -280,11 +268,8 @@ int DPLL_HELP(int number_of_variables, int number_of_clauses, Clause *clauses, V
     return DPLL_HELP(number_of_variables, number_of_clauses, clauses, assignment, time_unit_prop);
 }
 
-int DPLL(int number_of_variables, int number_of_clauses, Clause *clauses)
+int DPLL(int number_of_variables, int number_of_clauses, Clause *clauses, Variable_DPLL *assignment)
 {
-    // init assignment
-    Variable *assignment = malloc(number_of_variables * sizeof(Variable));
-
     for (int i = 0; i < number_of_variables; i++)
     {
         assignment[i].value = 0;
@@ -325,21 +310,12 @@ int DPLL(int number_of_variables, int number_of_clauses, Clause *clauses)
 
     time_algorithm = (time_algorithm_end.tv_sec - time_algorithm_start.tv_sec) + (time_algorithm_end.tv_nsec - time_algorithm_start.tv_nsec) / 1e9;
 
-    printf("Zeit gesamt: %f\nZeit unitprop: %f\n", time_algorithm, time_unitprop);
-
-    for (int i = 0; i < number_of_variables; i++)
-    {
-        free(assignment[i].pos_clauses);
-        free(assignment[i].neg_clauses);
-    }
-    free(assignment);
-
     if (is_sat == 1)
     {
         return 10;
     }
     else
     {
-        return 0;
+        return 20;
     }
 }
