@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "functions.h"
+#include "functions_dpll_etc.h"
 
 void copy_arr2SAT(int *arr1, int *arr2, int size)
 {

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "functions.h"
+#include "functions_dpll_etc.h"
 
 typedef struct
 {

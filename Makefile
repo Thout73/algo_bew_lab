@@ -1,6 +1,6 @@
 help:
 	echo "help"
-	
+
 clean_exe:
 	rm -f *.exe
 
@@ -21,8 +21,8 @@ dpll:
 .PHONY: cdcl
 
 cdcl:
-	gcc cdcl/CDCL.c cdcl/cdcl_help.c cdcl/analyse_conflict.c cdcl/parse_cdcl_cnf.c cdcl/trail_cdcl.c cdcl/watch_lst.c -o cdcl/solver.exe -fsanitize=address
-	./cdcl/solver.exe
+	gcc -Iinclude src/cdcl/CDCL.c src/cdcl/cdcl_help.c src/cdcl/analyse_conflict.c src/cdcl/parse_cdcl_cnf.c src/cdcl/trail_cdcl.c src/cdcl/watch_lst.c -o build/cdcl_solver.exe -fsanitize=address
+	./build/cdcl_solver.exe
 
 cdcl_check:
 	./drat-trim-master/drat-trim ./cdcl/debug.cnf ./cdcl/proof_log.cnf

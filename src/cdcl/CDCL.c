@@ -6,7 +6,7 @@
 
 int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
 {
-    FILE *proof_log = fopen("./cdcl/proof_log.cnf", "a");
+    FILE *proof_log = fopen("./src/cdcl/proof_log.cnf", "a");
 
     int decision_lvl = 0;
     Assignment *assignment = malloc(sizeof(Assignment) * number_of_variables);
@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
 {
     int number_of_variables, number_of_clauses, maximum_length;
 
-    CDCL_Clause *clauses = parse("./cdcl/debug.cnf", &number_of_variables, &number_of_clauses, &maximum_length);
+    CDCL_Clause *clauses = parse("./src/cdcl/debug.cnf", &number_of_variables, &number_of_clauses, &maximum_length);
 
     int result = CDCL(clauses, number_of_clauses, number_of_variables);
     printf("%d\n", result);

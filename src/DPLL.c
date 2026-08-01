@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "functions.h"
+#include "functions_dpll_etc.h"
 
 typedef struct
 {
@@ -184,7 +184,7 @@ int unitpropagation_neu(int number_of_variables, int number_of_clauses, Clause *
     return change;
 }
 
-int DPLL_HELP_neu(int number_of_variables, int number_of_clauses, Clause *clauses, Variable *assignment, double *time_unit_prop)
+int DPLL_HELP(int number_of_variables, int number_of_clauses, Clause *clauses, Variable *assignment, double *time_unit_prop)
 {
     int simplify_again;
     do
@@ -243,7 +243,7 @@ int DPLL_HELP_neu(int number_of_variables, int number_of_clauses, Clause *clause
     int set_sat = set_variable(clauses, assignment, branch_var, 1);
     if (set_sat != 0)
     {
-        int is_sat = DPLL_HELP_neu(number_of_variables, number_of_clauses, clauses, assignment, time_unit_prop);
+        int is_sat = DPLL_HELP(number_of_variables, number_of_clauses, clauses, assignment, time_unit_prop);
         if (is_sat == 1)
         {
             free(copy_clauses);
@@ -276,10 +276,10 @@ int DPLL_HELP_neu(int number_of_variables, int number_of_clauses, Clause *clause
         return 0;
     }
 
-    return DPLL_HELP_neu(number_of_variables, number_of_clauses, clauses, assignment, time_unit_prop);
+    return DPLL_HELP(number_of_variables, number_of_clauses, clauses, assignment, time_unit_prop);
 }
 
-int DPLL_neu(int number_of_variables, int number_of_clauses, Clause *clauses)
+int DPLL(int number_of_variables, int number_of_clauses, Clause *clauses)
 {
     // init assignment
     Variable *assignment = malloc(number_of_variables * sizeof(Variable));
@@ -318,7 +318,7 @@ int DPLL_neu(int number_of_variables, int number_of_clauses, Clause *clauses)
     struct timespec time_algorithm_start, time_algorithm_end;
     clock_gettime(CLOCK_MONOTONIC, &time_algorithm_start);
 
-    int is_sat = DPLL_HELP_neu(number_of_variables, number_of_clauses, clauses, assignment, &time_unitprop);
+    int is_sat = DPLL_HELP(number_of_variables, number_of_clauses, clauses, assignment, &time_unitprop);
 
     clock_gettime(CLOCK_MONOTONIC, &time_algorithm_end);
 

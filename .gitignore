@@ -1,9 +1,8 @@
 cnf_files/
 env/
-.vscode/
-cdcl/solver
 *.exe
 *.csv
-cdcl/debug.cnf
-cdcl/proof_log.cnf
+src/cdcl/debug.cnf
+src/cdcl/proof_log.cnf
 drat-trim-master/
+build/

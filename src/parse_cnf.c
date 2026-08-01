@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "functions.h"
+#include "functions_dpll_etc.h"
 
 Clause *parse(char *file_str, int *number_of_variables, int *number_of_clauses, int *maximum_length)
 {
