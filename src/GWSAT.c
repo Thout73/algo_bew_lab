@@ -18,7 +18,7 @@ typedef struct
     int break_score;
 } Variable;
 
-int is_satisfied(int number_of_clauses, Clause *clauses)
+static int is_satisfied(int number_of_clauses, Clause *clauses)
 {
     for (int i = 0; i < number_of_clauses; i++)
     {
@@ -76,7 +76,7 @@ static void update_clause(Clause *clause, Variable *assignment, int delta, int v
     }
 }
 
-void flip_variable(int variable, Clause *clauses, Variable *assignment)
+static void flip_variable(int variable, Clause *clauses, Variable *assignment)
 {
     int old_value = assignment[variable].value;
 
