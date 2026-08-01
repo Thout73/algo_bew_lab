@@ -29,119 +29,76 @@ int is_satisfied(int number_of_clauses, Clause *clauses)
     }
     return 1;
 }
-
-void flip_variable(int variable_to_flip, Clause *clauses, Variable *assignment)
+static void update_clause(Clause *clause, Variable *assignment, int delta, int variable)
 {
-    if (assignment[variable_to_flip].value == 1)
+    int old_count = clause->true_count;
+    int new_count = old_count + delta;
+
+    clause->true_count = new_count;
+
+    // Clause becomes unsatisfied
+    if (new_count == 0)
     {
-        for (int i = 0; i < assignment[variable_to_flip].pos_size; i++)
+        for (int j = 0; j < clause->size; j++)
+            assignment[abs(clause->literals[j]) - 1].make_score++;
+
+        assignment[variable].break_score--;
+    }
+    // Clause becomes satisfied with exactly one true literal
+    else if (new_count == 1 && delta == -1)
+    {
+        for (int j = 0; j < clause->size; j++)
         {
-            clauses[assignment[variable_to_flip].pos_clauses[i]].true_count--;
-            if (clauses[assignment[variable_to_flip].pos_clauses[i]].true_count == 0)
-            {
-                for (int j = 0; j < clauses[assignment[variable_to_flip].pos_clauses[i]].size; j++)
-                {
-                    assignment[abs(clauses[assignment[variable_to_flip].pos_clauses[i]].literals[j]) - 1].make_score++;
-                }
-                assignment[variable_to_flip].break_score--;
-            }
-            else
-            {
-                if (clauses[assignment[variable_to_flip].pos_clauses[i]].true_count == 1)
-                {
-                    for (int j = 0; j < clauses[assignment[variable_to_flip].pos_clauses[i]].size; j++)
-                    {
-                        if (assignment[abs(clauses[assignment[variable_to_flip].pos_clauses[i]].literals[j]) - 1].value == sign(clauses[assignment[variable_to_flip].pos_clauses[i]].literals[j]))
-                        {
-                            assignment[abs(clauses[assignment[variable_to_flip].pos_clauses[i]].literals[j]) - 1].break_score++;
-                        }
-                    }
-                }
-            }
-        }
-        for (int i = 0; i < assignment[variable_to_flip].neg_size; i++)
-        {
-            clauses[assignment[variable_to_flip].neg_clauses[i]].true_count++;
-            if (clauses[assignment[variable_to_flip].neg_clauses[i]].true_count == 1)
-            {
-                for (int j = 0; j < clauses[assignment[variable_to_flip].neg_clauses[i]].literals[j]; j++)
-                {
-                    assignment[abs(clauses[assignment[variable_to_flip].neg_clauses[i]].literals[j]) - 1].make_score--;
-                }
-                assignment[variable_to_flip].break_score++;
-            }
-            else
-            {
-                if (clauses[assignment[variable_to_flip].neg_clauses[i]].true_count == 2)
-                {
-                    for (int j = 0; j < clauses[assignment[variable_to_flip].neg_clauses[i]].size; j++)
-                    {
-                        if (assignment[abs(clauses[assignment[variable_to_flip].neg_clauses[i]].literals[j]) - 1].value == sign(clauses[assignment[variable_to_flip].neg_clauses[i]].literals[j]))
-                        {
-                            assignment[abs(clauses[assignment[variable_to_flip].neg_clauses[i]].literals[j]) - 1].break_score--;
-                        }
-                    }
-                }
-            }
+            int v = abs(clause->literals[j]) - 1;
+
+            if (assignment[v].value == sign(clause->literals[j]))
+                assignment[v].break_score++;
         }
     }
-    else
+    // Clause becomes satisfied
+    else if (new_count == 1 && delta == 1)
     {
-        for (int i = 0; i < assignment[variable_to_flip].pos_size; i++)
-        {
+        for (int j = 0; j < clause->size; j++)
+            assignment[abs(clause->literals[j]) - 1].make_score--;
 
-            clauses[assignment[variable_to_flip].pos_clauses[i]].true_count++;
-            if (clauses[assignment[variable_to_flip].pos_clauses[i]].true_count == 1)
-            {
-                for (int j = 0; j < clauses[assignment[variable_to_flip].pos_clauses[i]].size; j++)
-                {
-                    assignment[abs(clauses[assignment[variable_to_flip].pos_clauses[i]].literals[j]) - 1].make_score--;
-                }
-                assignment[variable_to_flip].break_score++;
-            }
-            else
-            {
-                if (clauses[assignment[variable_to_flip].pos_clauses[i]].true_count == 2)
-                {
-                    for (int j = 0; j < clauses[assignment[variable_to_flip].pos_clauses[i]].size; j++)
-                    {
-                        if (assignment[abs(clauses[assignment[variable_to_flip].pos_clauses[i]].literals[j]) - 1].value == sign(clauses[assignment[variable_to_flip].pos_clauses[i]].literals[j]))
-                        {
-                            assignment[abs(clauses[assignment[variable_to_flip].pos_clauses[i]].literals[j]) - 1].break_score--;
-                        }
-                    }
-                }
-            }
-        }
-        for (int i = 0; i < assignment[variable_to_flip].neg_size; i++)
+        assignment[variable].break_score++;
+    }
+    // Clause goes from 1 to 2 true literals
+    else if (new_count == 2)
+    {
+        for (int j = 0; j < clause->size; j++)
         {
+            int v = abs(clause->literals[j]) - 1;
 
-            clauses[assignment[variable_to_flip].neg_clauses[i]].true_count--;
-            if (clauses[assignment[variable_to_flip].neg_clauses[i]].true_count == 1)
-            {
-                for (int j = 0; j < clauses[assignment[variable_to_flip].neg_clauses[i]].size; j++)
-                {
-                    assignment[abs(clauses[assignment[variable_to_flip].neg_clauses[i]].literals[j]) - 1].make_score--;
-                }
-                assignment[variable_to_flip].break_score++;
-            }
-            else
-            {
-                if (clauses[assignment[variable_to_flip].neg_clauses[i]].true_count == 2)
-                {
-                    for (int j = 0; j < clauses[assignment[variable_to_flip].neg_clauses[i]].size; j++)
-                    {
-                        if (assignment[abs(clauses[assignment[variable_to_flip].neg_clauses[i]].literals[j]) - 1].value == sign(clauses[assignment[variable_to_flip].neg_clauses[i]].literals[j]))
-                        {
-                            assignment[abs(clauses[assignment[variable_to_flip].neg_clauses[i]].literals[j]) - 1].break_score--;
-                        }
-                    }
-                }
-            }
+            if (assignment[v].value == sign(clause->literals[j]))
+                assignment[v].break_score--;
         }
     }
+}
 
-    assignment[variable_to_flip].value = assignment[variable_to_flip].value * (-1);
+void flip_variable(int variable, Clause *clauses, Variable *assignment)
+{
+    int old_value = assignment[variable].value;
+
+    int *pos = assignment[variable].pos_clauses;
+    int pos_size = assignment[variable].pos_size;
+
+    int *neg = assignment[variable].neg_clauses;
+    int neg_size = assignment[variable].neg_size;
+
+    // Positive clauses: true -> false or false -> true
+    int pos_delta = (old_value == 1) ? -1 : 1;
+
+    // Negative clauses: false -> true or true -> false
+    int neg_delta = -pos_delta;
+
+    for (int i = 0; i < pos_size; i++)
+        update_clause(&clauses[pos[i]], assignment, pos_delta, variable);
+
+    for (int i = 0; i < neg_size; i++)
+        update_clause(&clauses[neg[i]], assignment, neg_delta, variable);
+
+    assignment[variable].value = -old_value;
 }
 
 int GWSAT(int number_of_variables, int number_of_clauses, Clause *clauses, int max_tries, int max_steps, double propability)

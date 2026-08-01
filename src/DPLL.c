@@ -3,6 +3,7 @@
 #include <string.h>
 #include <time.h>
 #include "functions_dpll_etc.h"
+#include <linux/time.h>
 
 typedef struct
 {
