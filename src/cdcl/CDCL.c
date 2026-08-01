@@ -4,12 +4,11 @@
 #include <time.h>
 #include "functions_cdcl.h"
 
-int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
+int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables, Assignment *assignment)
 {
     FILE *proof_log = fopen("./src/cdcl/proof_log.cnf", "a");
 
     int decision_lvl = 0;
-    Assignment *assignment = malloc(sizeof(Assignment) * number_of_variables);
     for (int i = 0; i < number_of_variables; i++)
     {
         assignment[i].decision_lvl = -1;
@@ -65,7 +64,6 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
             if (decision_lvl == 0)
             {
                 // free memory
-                free(assignment);
                 trail_destroy(&trail);
                 learned_destroy(&learned);
                 watchdb_destroy(watchDB, number_of_variables);
@@ -74,7 +72,7 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
 
                 fclose(proof_log);
 
-                return 0;
+                return 20;
             }
             CDCL_Clause *learned_clause = analyse_conflict(&trail, &learned, watchDB, &next_claus_id, assignment, confl_clause, &backtrack_level, &UIP_lit, number_of_variables, decision_lvl);
             // proof log
@@ -98,23 +96,14 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
         }
         if (trail.size == number_of_variables)
         {
-            // print assignment
-            printf("Assignment\n");
-            for (int i = 0; i < number_of_variables; i++)
-            {
-                printf("%d ", assignment[i].value * (i + 1));
-            }
-            printf("\n");
-
             // free memory
-            free(assignment);
             trail_destroy(&trail);
             learned_destroy(&learned);
             watchdb_destroy(watchDB, number_of_variables);
 
             fclose(proof_log);
 
-            return 1;
+            return 10;
         }
 
         // restart
@@ -173,8 +162,26 @@ int main(int argc, char *argv[])
 
     CDCL_Clause *clauses = parse("./cnf_files/random6.cnf", &number_of_variables, &number_of_clauses, &maximum_length);
 
-    int result = CDCL(clauses, number_of_clauses, number_of_variables);
-    printf("%d\n", result);
+    Assignment *assignment = malloc(sizeof(*assignment) * number_of_variables);
+
+    int result = CDCL(clauses, number_of_clauses, number_of_variables, assignment);
+
+    if (result == 10)
+    {
+        printf("s SATISFIABLE\n");
+
+        // print assignment
+        printf("v ");
+        for (int i = 0; i < number_of_variables; i++)
+        {
+            printf("%d ", assignment[i].value * (i + 1));
+        }
+        printf("\n");
+    }
+    else
+    {
+        printf("s UNSATISFIABLE\n");
+    }
 
     for (int i = 0; i < number_of_clauses; i++)
     {
@@ -182,6 +189,8 @@ int main(int argc, char *argv[])
     }
 
     free(clauses);
+
+    free(assignment);
 
     return 0;
 }
