@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <sys/resource.h>
 #include "functions_dpll_etc.h"
 
 int set_variable(Clause *clauses, Variable_DPLL *assignment, int variable, int value)
@@ -172,46 +173,41 @@ int unitpropagation_neu(int number_of_variables, int number_of_clauses, Clause *
     } while (done == 0);
     return change;
 }
-
-int DPLL_HELP(int number_of_variables, int number_of_clauses, Clause *clauses, Variable_DPLL *assignment, double *time_unit_prop)
+int DPLL_HELP(int number_of_variables, int number_of_clauses, Clause *clauses, Variable_DPLL *assignment, Stats *stats)
 {
     int simplify_again;
     do
     {
         simplify_again = 0;
 
-        // 1. Unit Propagation ausführen
         struct timespec time_unit_start, time_unit_end;
         clock_gettime(CLOCK_MONOTONIC, &time_unit_start);
         int prop_res = unitpropagation_neu(number_of_variables, number_of_clauses, clauses, assignment);
+        stats->num_of_unit_propagations++;
         clock_gettime(CLOCK_MONOTONIC, &time_unit_end);
-        *time_unit_prop += (time_unit_end.tv_sec - time_unit_start.tv_sec) + (time_unit_end.tv_nsec - time_unit_start.tv_nsec) / 1e9;
+        stats->time_in_unit_prop += (time_unit_end.tv_sec - time_unit_start.tv_sec) + (time_unit_end.tv_nsec - time_unit_start.tv_nsec) / 1e9;
 
         if (prop_res == 2)
-            return 0; // UNSAT
+            return 0;
         if (prop_res == 1)
             simplify_again = 1;
 
-        // 2. Pure Literal Elimination ausführen
         int pure_res = pure_literal_elimination_neu(number_of_variables, number_of_clauses, clauses, assignment);
 
         if (pure_res == 2)
-            return 0; // UNSAT
+            return 0;
         if (pure_res == 1)
             simplify_again = 1;
 
-    } while (simplify_again); // Wiederholen, solange sich noch etwas vereinfachen lässt
+    } while (simplify_again);
 
-    // find unassigned vars to reset them later
     int *copy_values = malloc(number_of_variables * sizeof(int));
     int branch_var = -1;
     for (int i = 0; i < number_of_variables; i++)
     {
         copy_values[i] = assignment[i].value;
         if (branch_var == -1 && assignment[i].value == 0)
-        {
             branch_var = i + 1;
-        }
     }
 
     if (branch_var == -1)
@@ -220,7 +216,8 @@ int DPLL_HELP(int number_of_variables, int number_of_clauses, Clause *clauses, V
         return 1;
     }
 
-    // copy clauses to reset them later
+    stats->num_of_decisions++; // ein Entscheidungsknoten, unabhängig davon wie viele Zweige er hat
+
     Clause *copy_clauses = malloc(number_of_clauses * sizeof(Clause));
     for (int i = 0; i < number_of_clauses; i++)
     {
@@ -232,7 +229,7 @@ int DPLL_HELP(int number_of_variables, int number_of_clauses, Clause *clauses, V
     int set_sat = set_variable(clauses, assignment, branch_var, 1);
     if (set_sat != 0)
     {
-        int is_sat = DPLL_HELP(number_of_variables, number_of_clauses, clauses, assignment, time_unit_prop);
+        int is_sat = DPLL_HELP(number_of_variables, number_of_clauses, clauses, assignment, stats);
         if (is_sat == 1)
         {
             free(copy_clauses);
@@ -241,13 +238,9 @@ int DPLL_HELP(int number_of_variables, int number_of_clauses, Clause *clauses, V
         }
     }
 
-    // reset vars
     for (int i = 0; i < number_of_variables; i++)
-    {
         assignment[i].value = copy_values[i];
-    }
 
-    // reset clauses
     for (int i = 0; i < number_of_clauses; i++)
     {
         clauses[i].sat = copy_clauses[i].sat;
@@ -261,15 +254,15 @@ int DPLL_HELP(int number_of_variables, int number_of_clauses, Clause *clauses, V
     free(copy_clauses);
 
     if (set_sat == 0)
-    {
         return 0;
-    }
 
-    return DPLL_HELP(number_of_variables, number_of_clauses, clauses, assignment, time_unit_prop);
+    return DPLL_HELP(number_of_variables, number_of_clauses, clauses, assignment, stats);
 }
 
-int DPLL(int number_of_variables, int number_of_clauses, Clause *clauses, Variable_DPLL *assignment)
+int DPLL(int number_of_variables, int number_of_clauses, Clause *clauses, Variable_DPLL *assignment, Stats *stats)
 {
+    memset(stats, 0, sizeof(Stats));
+
     for (int i = 0; i < number_of_variables; i++)
     {
         assignment[i].value = 0;
@@ -298,24 +291,17 @@ int DPLL(int number_of_variables, int number_of_clauses, Clause *clauses, Variab
         }
     }
 
-    double time_unitprop = 0;
-    double time_algorithm = 0;
+    struct timespec t0, t1;
+    clock_gettime(CLOCK_MONOTONIC, &t0);
 
-    struct timespec time_algorithm_start, time_algorithm_end;
-    clock_gettime(CLOCK_MONOTONIC, &time_algorithm_start);
+    int is_sat = DPLL_HELP(number_of_variables, number_of_clauses, clauses, assignment, stats);
 
-    int is_sat = DPLL_HELP(number_of_variables, number_of_clauses, clauses, assignment, &time_unitprop);
+    clock_gettime(CLOCK_MONOTONIC, &t1);
+    stats->time = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1e9;
 
-    clock_gettime(CLOCK_MONOTONIC, &time_algorithm_end);
+    struct rusage usage;
+    getrusage(RUSAGE_SELF, &usage);
+    stats->used_memory = (int)usage.ru_maxrss;
 
-    time_algorithm = (time_algorithm_end.tv_sec - time_algorithm_start.tv_sec) + (time_algorithm_end.tv_nsec - time_algorithm_start.tv_nsec) / 1e9;
-
-    if (is_sat == 1)
-    {
-        return 10;
-    }
-    else
-    {
-        return 20;
-    }
+    return is_sat == 1 ? 10 : 20;
 }

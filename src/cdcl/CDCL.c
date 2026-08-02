@@ -54,7 +54,7 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables, A
 
     int trail_lvl = 0;
 
-    int restart_after = 200;
+    int restart_after = 1000;
     int num_of_restarts = 0;
     int num_of_confl = 0;
 
@@ -202,7 +202,7 @@ int main(int argc, char *argv[])
 {
     int number_of_variables, number_of_clauses, maximum_length;
 
-    CDCL_Clause *clauses = parse("./cnf_files/php7.cnf", &number_of_variables, &number_of_clauses, &maximum_length);
+    CDCL_Clause *clauses = parse("./cnf_files/pebbling20.cnf", &number_of_variables, &number_of_clauses, &maximum_length);
 
     Assignment *assignment = malloc(sizeof(*assignment) * number_of_variables);
     Stats stats;

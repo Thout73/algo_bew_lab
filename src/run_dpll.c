@@ -9,6 +9,15 @@ int sign(int x)
     return 1;
 }
 
+static void print_stats(Stats *stats)
+{
+    printf("c time: %.3fs\n", stats->time);
+    printf("c time in unit propagation: %.3fs\n", stats->time_in_unit_prop);
+    printf("c peak memory: %d KB\n", stats->used_memory);
+    printf("c unit propagations: %d\n", stats->num_of_unit_propagations);
+    printf("c decisions: %d\n", stats->num_of_decisions);
+}
+
 void print_assignment(Variable_DPLL *assignment, int number_of_variables)
 {
     for (int i = 0; i < number_of_variables; i++)
@@ -29,7 +38,7 @@ int main(void)
     int maximum_length;
 
     Clause *clauses = parse(
-        "cnf_files/2SAT1.cnf",
+        "cnf_files/pebbling20.cnf",
         &number_of_variables,
         &number_of_clauses,
         &maximum_length);
@@ -41,13 +50,15 @@ int main(void)
     }
 
     // init assignment
+    Stats stats;
     Variable_DPLL *assignment = malloc(number_of_variables * sizeof(Variable_DPLL));
 
     int result = DPLL(
         number_of_variables,
         number_of_clauses,
         clauses,
-        assignment);
+        assignment,
+        &stats);
 
     if (result == 20)
     {
@@ -59,6 +70,8 @@ int main(void)
         printf("v ");
         print_assignment(assignment, number_of_variables);
     }
+
+    print_stats(&stats);
 
     for (int i = 0; i < number_of_clauses; i++)
     {
