@@ -147,7 +147,6 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables, A
             num_of_confl = 0;
             backtrack(0, &trail, assignment);
             decision_lvl = 0;
-            printf("RESTART, %d\n", num_of_restarts);
         }
 
         // delete clauses
