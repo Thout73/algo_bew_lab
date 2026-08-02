@@ -10,6 +10,17 @@
 
 typedef struct
 {
+    double time;
+    double time_in_unit_prop;
+    int used_memory;
+    int num_of_unit_propagations;
+    int num_of_confl;
+    int num_of_restarts;
+    int num_of_decisions;
+} Stats;
+
+typedef struct
+{
     int size;
     int id;
     int *literals;

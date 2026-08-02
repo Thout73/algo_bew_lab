@@ -12,6 +12,15 @@ typedef struct
 
 typedef struct
 {
+    double time;
+    double time_in_unit_prop;
+    int used_memory;
+    int num_of_unit_propagations;
+    int num_of_decisions;
+} Stats;
+
+typedef struct
+{
     int value;
 
     int *pos_clauses;
