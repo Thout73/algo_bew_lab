@@ -3,7 +3,7 @@
 #include <string.h>
 #include "functions_cdcl.h"
 
-CDCL_Clause *parse(char *file_str, int *number_of_variables, int *number_of_clauses, int *maximum_length)
+CDCL_Clause *parse_cdcl(char *file_str, int *number_of_variables, int *number_of_clauses, int *maximum_length)
 {
     FILE *fp = fopen(file_str, "r");
 

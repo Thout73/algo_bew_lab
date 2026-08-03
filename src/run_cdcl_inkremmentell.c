@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
 {
     int number_of_variables, number_of_clauses, maximum_length;
 
-    CDCL_Clause *clauses = parse("./src/cdcl/debug.cnf", &number_of_variables, &number_of_clauses, &maximum_length);
+    CDCL_Clause *clauses = parse_cdcl("./src/cdcl/debug.cnf", &number_of_variables, &number_of_clauses, &maximum_length);
 
     int result = CDCL_inkrementell(clauses, number_of_clauses, number_of_variables);
 

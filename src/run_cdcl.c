@@ -5,7 +5,7 @@
 #include <sys/resource.h>
 #include "./cdcl/functions_cdcl.h"
 
-static void print_stats(Stats *stats)
+static void print_stats(Stats_CDCL *stats)
 {
     printf("c time: %.3fs\n", stats->time);
     printf("c time in unit propagation: %.3fs\n", stats->time_in_unit_prop);
@@ -26,10 +26,10 @@ int main(int argc, char *argv[])
     }
     int number_of_variables, number_of_clauses, maximum_length;
 
-    CDCL_Clause *clauses = parse(argv[1], &number_of_variables, &number_of_clauses, &maximum_length);
+    CDCL_Clause *clauses = parse_cdcl(argv[1], &number_of_variables, &number_of_clauses, &maximum_length);
 
     Assignment *assignment = malloc(sizeof(*assignment) * number_of_variables);
-    Stats stats;
+    Stats_CDCL stats;
 
     int result = CDCL(clauses, number_of_clauses, number_of_variables, assignment, &stats);
 

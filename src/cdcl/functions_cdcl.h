@@ -17,7 +17,7 @@ typedef struct
     int num_of_confl;
     int num_of_restarts;
     int num_of_decisions;
-} Stats;
+} Stats_CDCL;
 
 typedef struct
 {
@@ -122,9 +122,9 @@ int backtrack(int target_lvl, Trail *trail, Assignment *assignment);
 
 void decide(Assignment *assignment, Trail *trail, int decision_lvl, int number_of_variables);
 
-CDCL_Clause *parse(char *file_str, int *number_of_variables, int *number_of_clauses, int *maximum_length);
+CDCL_Clause *parse_cdcl(char *file_str, int *number_of_variables, int *number_of_clauses, int *maximum_length);
 
-int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables, Assignment *assignment, Stats *stats);
+int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables, Assignment *assignment, Stats_CDCL *stats);
 
 int CDCL_inkrementell(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables);
 

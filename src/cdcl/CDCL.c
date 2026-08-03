@@ -7,7 +7,7 @@
 
 static CDCL_Clause *unitprop_timed(int number_of_clauses, int number_of_variables, Trail *trail,
                                    WatchDB *watchDB, Assignment *assignment, int decision_lvl,
-                                   int start_qhead, Stats *stats)
+                                   int start_qhead, Stats_CDCL *stats)
 {
     size_t trail_before = trail->size;
     clock_t t0 = clock();
@@ -22,12 +22,12 @@ static CDCL_Clause *unitprop_timed(int number_of_clauses, int number_of_variable
     return result;
 }
 
-int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables, Assignment *assignment, Stats *stats)
+int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables, Assignment *assignment, Stats_CDCL *stats)
 {
     FILE *proof_log = fopen("./src/cdcl/proof_log.cnf", "a");
 
     clock_t cdcl_start = clock();
-    memset(stats, 0, sizeof(Stats));
+    memset(stats, 0, sizeof(Stats_CDCL));
 
     int decision_lvl = 0;
     for (int i = 0; i < number_of_variables; i++)
