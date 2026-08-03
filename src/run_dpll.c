@@ -31,14 +31,20 @@ void print_assignment(Variable_DPLL *assignment, int number_of_variables)
     printf("\n");
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
+    if (argc != 2)
+    {
+        printf("falsche eingabe\n");
+        return 4;
+    }
+
     int number_of_variables;
     int number_of_clauses;
     int maximum_length;
 
     Clause *clauses = parse(
-        "cnf_files/pebbling20.cnf",
+        argv[1],
         &number_of_variables,
         &number_of_clauses,
         &maximum_length);

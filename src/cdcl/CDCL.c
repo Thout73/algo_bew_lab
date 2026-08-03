@@ -54,7 +54,7 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables, A
 
     int trail_lvl = 0;
 
-    int restart_after = 1000;
+    int restart_after = 40;
     int num_of_restarts = 0;
     int num_of_confl = 0;
 
@@ -185,55 +185,4 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables, A
         stats->num_of_decisions++;
         trail_lvl = trail.size - 1;
     }
-}
-
-static void print_stats(Stats *stats)
-{
-    printf("c time: %.3fs\n", stats->time);
-    printf("c time in unit propagation: %.3fs\n", stats->time_in_unit_prop);
-    printf("c peak memory: %d KB\n", stats->used_memory);
-    printf("c unit propagations: %d\n", stats->num_of_unit_propagations);
-    printf("c conflicts: %d\n", stats->num_of_confl);
-    printf("c restarts: %d\n", stats->num_of_restarts);
-    printf("c decisions: %d\n", stats->num_of_decisions);
-}
-
-int main(int argc, char *argv[])
-{
-    int number_of_variables, number_of_clauses, maximum_length;
-
-    CDCL_Clause *clauses = parse("./cnf_files/pebbling20.cnf", &number_of_variables, &number_of_clauses, &maximum_length);
-
-    Assignment *assignment = malloc(sizeof(*assignment) * number_of_variables);
-    Stats stats;
-
-    int result = CDCL(clauses, number_of_clauses, number_of_variables, assignment, &stats);
-
-    if (result == 10)
-    {
-        printf("s SATISFIABLE\n");
-
-        printf("v ");
-        for (int i = 0; i < number_of_variables; i++)
-        {
-            printf("%d ", assignment[i].value * (i + 1));
-        }
-        printf("\n");
-    }
-    else
-    {
-        printf("s UNSATISFIABLE\n");
-    }
-
-    print_stats(&stats);
-
-    for (int i = 0; i < number_of_clauses; i++)
-    {
-        free(clauses[i].literals);
-    }
-
-    free(clauses);
-    free(assignment);
-
-    return 0;
 }

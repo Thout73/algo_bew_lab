@@ -124,4 +124,8 @@ void decide(Assignment *assignment, Trail *trail, int decision_lvl, int number_o
 
 CDCL_Clause *parse(char *file_str, int *number_of_variables, int *number_of_clauses, int *maximum_length);
 
+int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables, Assignment *assignment, Stats *stats);
+
+int CDCL_inkrementell(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables);
+
 #endif // TRAIL_H

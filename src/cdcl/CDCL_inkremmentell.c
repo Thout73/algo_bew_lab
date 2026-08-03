@@ -146,7 +146,6 @@ void add_permanent_clause(char *args, WatchDB *watchDB, LearnedClauses *permanen
     }
 
     learned_add(permanent_clauses, curr);
-    printf("Permanente Klausel hinzugefuegt: id=%d, size=%d\n", curr->id, n);
 }
 
 int CDCL_inkrementell(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables)
@@ -384,22 +383,4 @@ int CDCL_inkrementell(CDCL_Clause *clauses, int number_of_clauses, int number_of
         decide(assignment, &trail, decision_lvl, number_of_variables);
         trail_lvl = trail.size - 1;
     }
-}
-
-int main(int argc, char *argv[])
-{
-    int number_of_variables, number_of_clauses, maximum_length;
-
-    CDCL_Clause *clauses = parse("./src/cdcl/debug.cnf", &number_of_variables, &number_of_clauses, &maximum_length);
-
-    int result = CDCL_inkrementell(clauses, number_of_clauses, number_of_variables);
-
-    for (int i = 0; i < number_of_clauses; i++)
-    {
-        free(clauses[i].literals);
-    }
-
-    free(clauses);
-
-    return 0;
 }
