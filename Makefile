@@ -58,7 +58,7 @@ $(BIN_CDCL_INC): $(SRC_CDCL_INC) | $(BUILD_DIR)
 	@$(BIN_2SAT) $(FILE) || true
 
 dpll: $(BIN_DPLL)
-	@$(BIN_DPLL) $(FILE) || true
+	@$(BIN_DPLL) $(FILE) $(PURE_LIT) || true
 
 gwsat: $(BIN_GWSAT)
 	@$(BIN_GWSAT) $(FILE) || true

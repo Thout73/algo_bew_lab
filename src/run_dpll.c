@@ -33,10 +33,20 @@ void print_assignment(Variable_DPLL *assignment, int number_of_variables)
 
 int main(int argc, char *argv[])
 {
-    if (argc != 2)
+    if (argc < 2)
     {
         printf("falsche eingabe\n");
         return 4;
+    }
+
+    int use_pure_literal;
+    if (argc >= 3)
+    {
+        use_pure_literal = atoi(argv[2]);
+    }
+    else
+    {
+        use_pure_literal = 1;
     }
 
     int number_of_variables;
@@ -64,7 +74,8 @@ int main(int argc, char *argv[])
         number_of_clauses,
         clauses,
         assignment,
-        &stats);
+        &stats,
+        use_pure_literal);
 
     if (result == 20)
     {

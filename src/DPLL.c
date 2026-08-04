@@ -173,7 +173,7 @@ int unitpropagation_neu(int number_of_variables, int number_of_clauses, Clause *
     } while (done == 0);
     return change;
 }
-int DPLL_HELP(int number_of_variables, int number_of_clauses, Clause *clauses, Variable_DPLL *assignment, Stats *stats)
+int DPLL_HELP(int number_of_variables, int number_of_clauses, Clause *clauses, Variable_DPLL *assignment, Stats *stats, int use_pure_literal)
 {
     int simplify_again;
     do
@@ -191,13 +191,15 @@ int DPLL_HELP(int number_of_variables, int number_of_clauses, Clause *clauses, V
             return 0;
         if (prop_res == 1)
             simplify_again = 1;
+        if (use_pure_literal)
+        {
+            int pure_res = pure_literal_elimination_neu(number_of_variables, number_of_clauses, clauses, assignment);
 
-        int pure_res = pure_literal_elimination_neu(number_of_variables, number_of_clauses, clauses, assignment);
-
-        if (pure_res == 2)
-            return 0;
-        if (pure_res == 1)
-            simplify_again = 1;
+            if (pure_res == 2)
+                return 0;
+            if (pure_res == 1)
+                simplify_again = 1;
+        }
 
     } while (simplify_again);
 
@@ -229,7 +231,7 @@ int DPLL_HELP(int number_of_variables, int number_of_clauses, Clause *clauses, V
     int set_sat = set_variable(clauses, assignment, branch_var, 1);
     if (set_sat != 0)
     {
-        int is_sat = DPLL_HELP(number_of_variables, number_of_clauses, clauses, assignment, stats);
+        int is_sat = DPLL_HELP(number_of_variables, number_of_clauses, clauses, assignment, stats, use_pure_literal);
         if (is_sat == 1)
         {
             free(copy_clauses);
@@ -256,10 +258,10 @@ int DPLL_HELP(int number_of_variables, int number_of_clauses, Clause *clauses, V
     if (set_sat == 0)
         return 0;
 
-    return DPLL_HELP(number_of_variables, number_of_clauses, clauses, assignment, stats);
+    return DPLL_HELP(number_of_variables, number_of_clauses, clauses, assignment, stats, use_pure_literal);
 }
 
-int DPLL(int number_of_variables, int number_of_clauses, Clause *clauses, Variable_DPLL *assignment, Stats *stats)
+int DPLL(int number_of_variables, int number_of_clauses, Clause *clauses, Variable_DPLL *assignment, Stats *stats, int use_pure_literal)
 {
     memset(stats, 0, sizeof(Stats));
 
@@ -294,7 +296,7 @@ int DPLL(int number_of_variables, int number_of_clauses, Clause *clauses, Variab
     struct timespec t0, t1;
     clock_gettime(CLOCK_MONOTONIC, &t0);
 
-    int is_sat = DPLL_HELP(number_of_variables, number_of_clauses, clauses, assignment, stats);
+    int is_sat = DPLL_HELP(number_of_variables, number_of_clauses, clauses, assignment, stats, use_pure_literal);
 
     clock_gettime(CLOCK_MONOTONIC, &t1);
     stats->time = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1e9;

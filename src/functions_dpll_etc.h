@@ -48,7 +48,7 @@ typedef struct
 #define FUNCTIONS_H
 
 int SAT2(int number_of_variables, int number_of_clauses, Clause *clauses, int *assignment, Stats *stats);
-int DPLL(int number_of_variables, int number_of_clauses, Clause *clauses, Variable_DPLL *assignment, Stats *stats);
+int DPLL(int number_of_variables, int number_of_clauses, Clause *clauses, Variable_DPLL *assignment, Stats *stats, int use_pure_literal);
 int GWSAT(int number_of_variables, int number_of_clauses, Clause *clauses, int max_tries, int max_steps, double propability, Variable_GWSAT *assignment);
 int sign(int x);
 Clause *parse(char *file_str, int *number_of_variables, int *number_of_clauses, int *maximum_length);
