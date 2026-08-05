@@ -104,29 +104,14 @@ GWSAT_FLAGS := \
 
 help:
 	@echo "Targets:"
-	@echo "  make all"
-	@echo "      Alle Solver bauen."
-	@echo ""
-	@echo "  make 2sat FILE=pfad.cnf"
-	@echo "      2SAT-Solver ausführen."
-	@echo ""
-	@echo "  make dpll FILE=pfad.cnf"
-	@echo "      DPLL-Solver ausführen."
-	@echo ""
-	@echo "  make gwsat FILE=pfad.cnf"
-	@echo "      GWSAT-Solver ausführen."
-	@echo ""
-	@echo "  make cdcl FILE=pfad.cnf"
-	@echo "      CDCL-Solver ausführen."
-	@echo ""
-	@echo "  make cdcl_inkremtell FILE=pfad.cnf"
-	@echo "      Inkrementellen CDCL-Solver ausführen."
-	@echo ""
-	@echo "  make cdcl_check CNF_FILE=... PROOF_LOG=..."
-	@echo "      Proof mit drat-trim prüfen."
-	@echo ""
-	@echo "  make clean"
-	@echo "      build/ löschen."
+	@echo "  make all                              - Alle Solver bauen"
+	@echo "  make 2sat FILE=pfad.cnf               - 2SAT-Solver ausführen"
+	@echo "  make dpll FILE=pfad.cnf               - DPLL-Solver ausführen"
+	@echo "  make gwsat FILE=pfad.cnf              - GWSAT-Solver ausführen"
+	@echo "  make cdcl FILE=pfad.cnf               - CDCL-Solver ausführen"
+	@echo "  make cdcl_inkremtell FILE=pfad.cnf    - Inkrementellen CDCL-Solver ausführen"
+	@echo "  make cdcl_check CNF_FILE=... PROOF_LOG=... - Proof mit drat-trim prüfen"
+	@echo "  make clean                            - build/ löschen"
 
 
 # ============================================================
@@ -160,6 +145,9 @@ $(BIN_CDCL_INC): $(SRC_CDCL_INC) | $(BUILD_DIR)
 # ============================================================
 # Ausführen
 # ============================================================
+
+all: $(BIN_2SAT) $(BIN_DPLL) $(BIN_GWSAT) $(BIN_CDCL) $(BIN_CDCL_INC)
+	@echo "Alle Solver wurden gebaut."
 
 2sat: $(BIN_2SAT)
 	@$(BIN_2SAT) $(FILE) || true
