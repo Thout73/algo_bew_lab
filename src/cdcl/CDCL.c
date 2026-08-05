@@ -22,9 +22,18 @@ static CDCL_Clause *unitprop_timed(int number_of_clauses, int number_of_variable
     return result;
 }
 
-int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables, Assignment *assignment, Stats_CDCL *stats)
+int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables, Assignment *assignment, Stats_CDCL *stats, CDCL_options *options)
 {
-    FILE *proof_log = fopen("./src/cdcl/proof_log.cnf", "a");
+    FILE *proof_log;
+    if (options->use_proof_log)
+    {
+        proof_log = fopen("./src/cdcl/proof_log.cnf", "a");
+        if (proof_log == NULL)
+        {
+            perror("fopen proof log");
+            exit(EXIT_FAILURE);
+        }
+    }
 
     clock_t cdcl_start = clock();
     memset(stats, 0, sizeof(Stats_CDCL));
@@ -48,18 +57,20 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables, A
     WatchDB *watchDB = watchdb_init(number_of_variables);
     build_watchdb(watchDB, clauses, number_of_clauses);
 
+    srand(time(NULL));
+
     int next_claus_id = number_of_clauses + 1;
     int backtrack_level;
     int UIP_lit;
 
     int trail_lvl = 0;
 
-    int restart_after = 40;
+    int restart_after = options->restart_after;
     int num_of_restarts = 0;
     int num_of_confl = 0;
 
-    int delete_after = 3000;
-    int delete_step = 500;
+    int delete_after = options->delete_after;
+    int delete_step = options->delete_step;
 
     // decide all unit clauses
     for (int i = 0; i < number_of_clauses; i++)
@@ -91,8 +102,11 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables, A
                 learned_destroy(&learned);
                 watchdb_destroy(watchDB, number_of_variables);
 
-                fprintf(proof_log, "0");
-                fclose(proof_log);
+                if (options->use_proof_log)
+                {
+                    fprintf(proof_log, "0");
+                    fclose(proof_log);
+                }
 
                 stats->time = (double)(clock() - cdcl_start) / CLOCKS_PER_SEC;
                 struct rusage usage;
@@ -103,11 +117,14 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables, A
             }
             CDCL_Clause *learned_clause = analyse_conflict(&trail, &learned, watchDB, &next_claus_id, assignment, confl_clause, &backtrack_level, &UIP_lit, number_of_variables, decision_lvl);
 
-            for (int i = 0; i < learned_clause->size; i++)
+            if (options->use_proof_log)
             {
-                fprintf(proof_log, "%d ", learned_clause->literals[i]);
+                for (int i = 0; i < learned_clause->size; i++)
+                {
+                    fprintf(proof_log, "%d ", learned_clause->literals[i]);
+                }
+                fprintf(proof_log, "0 \n");
             }
-            fprintf(proof_log, "0 \n");
 
             backtrack(backtrack_level, &trail, assignment);
             trail.b = trail.b * c;
@@ -128,7 +145,8 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables, A
             learned_destroy(&learned);
             watchdb_destroy(watchDB, number_of_variables);
 
-            fclose(proof_log);
+            if (options->use_proof_log)
+                fclose(proof_log);
 
             stats->time = (double)(clock() - cdcl_start) / CLOCKS_PER_SEC;
             struct rusage usage;
@@ -139,7 +157,7 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables, A
         }
 
         // restart
-        if (num_of_confl > restart_after)
+        if (num_of_confl > restart_after && options->use_restarts)
         {
             num_of_restarts++;
             stats->num_of_restarts++;
@@ -150,7 +168,7 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables, A
         }
 
         // delete clauses
-        if (learned.size > delete_after)
+        if (learned.size > delete_after && options->use_delete_clauses)
         {
             delete_after += delete_step;
 
@@ -166,12 +184,15 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables, A
                 if (is_locked(curr, assignment))
                     continue;
 
-                fprintf(proof_log, "d ");
-                for (int j = 0; j < curr->size; j++)
+                if (options->use_proof_log)
                 {
-                    fprintf(proof_log, "%d ", curr->literals[j]);
+                    fprintf(proof_log, "d ");
+                    for (int j = 0; j < curr->size; j++)
+                    {
+                        fprintf(proof_log, "%d ", curr->literals[j]);
+                    }
+                    fprintf(proof_log, "0 \n");
                 }
-                fprintf(proof_log, "0 \n");
 
                 remove_from_watchlists(watchDB, curr);
                 free(curr->literals);
@@ -181,7 +202,14 @@ int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables, A
         }
 
         decision_lvl++;
-        decide(assignment, &trail, decision_lvl, number_of_variables);
+        if (options->use_vsids)
+        {
+            decide(assignment, &trail, decision_lvl, number_of_variables);
+        }
+        else
+        {
+            decide_random(assignment, &trail, decision_lvl, number_of_variables);
+        }
         stats->num_of_decisions++;
         trail_lvl = trail.size - 1;
     }

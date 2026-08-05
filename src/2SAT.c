@@ -161,6 +161,15 @@ int SAT2(int number_of_variables, int number_of_clauses, Clause *clauses, int *a
         is_sat = check_sat2SAT(number_of_variables, number_of_clauses, clauses, assignment);
     }
 
+    // Nicht gesetzte Variablen auf TRUE setzen
+    for (int i = 0; i < number_of_variables; i++)
+    {
+        if (assignment[i] == 0)
+        {
+            assignment[i] = 1;
+        }
+    }
+
     clock_gettime(CLOCK_MONOTONIC, &t1);
     stats->time = (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1e9;
 

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <sys/resource.h>
 #include "functions_dpll_etc.h"
 
 static int is_satisfied(int number_of_clauses, Clause *clauses)
@@ -62,6 +63,17 @@ static void update_clause(Clause *clause, Variable_GWSAT *assignment, int delta,
     }
 }
 
+static void fill_final_stats(Stats_GWSAT *stats, struct timespec *t0)
+{
+    struct timespec t1;
+    clock_gettime(CLOCK_MONOTONIC, &t1);
+    stats->time = (t1.tv_sec - t0->tv_sec) + (t1.tv_nsec - t0->tv_nsec) / 1e9;
+
+    struct rusage usage;
+    getrusage(RUSAGE_SELF, &usage);
+    stats->used_memory = (int)usage.ru_maxrss; // in KB
+}
+
 static void flip_variable(int variable, Clause *clauses, Variable_GWSAT *assignment)
 {
     int old_value = assignment[variable].value;
@@ -86,12 +98,18 @@ static void flip_variable(int variable, Clause *clauses, Variable_GWSAT *assignm
 
     assignment[variable].value = -old_value;
 }
-
-int GWSAT(int number_of_variables, int number_of_clauses, Clause *clauses, int max_tries, int max_steps, double propability, Variable_GWSAT *assignment)
+int GWSAT(int number_of_variables, int number_of_clauses, Clause *clauses, int max_tries, int max_steps, double propability, Variable_GWSAT *assignment, Stats_GWSAT *stats)
 {
+    memset(stats, 0, sizeof(Stats_GWSAT));
+
+    struct timespec t0, t1;
+    clock_gettime(CLOCK_MONOTONIC, &t0);
+
     srand(time(NULL));
     for (int iterations = 0; iterations < max_tries; iterations++)
     {
+        stats->number_of_used_tries++;
+
         // random start assignment
         for (int i = 0; i < number_of_variables; i++)
         {
@@ -158,10 +176,13 @@ int GWSAT(int number_of_variables, int number_of_clauses, Clause *clauses, int m
         }
         if (is_satisfied(number_of_clauses, clauses) == 1)
         {
+            fill_final_stats(stats, &t0);
             return 10;
         }
         for (int step = 0; step < max_steps; step++)
         {
+            stats->number_of_used_steps++;
+
             int variable_to_flip;
             if ((double)rand() / RAND_MAX < propability)
             {
@@ -199,9 +220,12 @@ int GWSAT(int number_of_variables, int number_of_clauses, Clause *clauses, int m
 
             if (is_satisfied(number_of_clauses, clauses) == 1)
             {
+                fill_final_stats(stats, &t0);
                 return 10;
             }
         }
     }
+
+    fill_final_stats(stats, &t0);
     return 0;
 }

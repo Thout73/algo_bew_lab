@@ -234,3 +234,35 @@ void decide(Assignment *assignment, Trail *trail, int decision_lvl, int number_o
     trail_push(trail, max_counter_index, assignment[max_counter_index].value, NULL, decision_lvl);
     return;
 }
+
+void decide_random(Assignment *assignment, Trail *trail, int decision_lvl, int number_of_variables)
+{
+    // Reservoir Sampling: waehlt gleichverteilt zufaellig eine der
+    // unassigned Variablen aus, ohne vorher ein separates Array aller
+    // unassigned Indizes aufbauen zu muessen.
+    int chosen_index = -1;
+    int unassigned_count = 0;
+
+    for (int i = 0; i < number_of_variables; i++)
+    {
+        if (assignment[i].value == UNASSIGNED)
+        {
+            unassigned_count++;
+            // mit Wahrscheinlichkeit 1/unassigned_count die aktuelle Variable wählen
+            if (rand() % unassigned_count == 0)
+            {
+                chosen_index = i;
+            }
+        }
+    }
+
+    int val = (rand() % 2 == 0) ? 1 : -1;
+
+    assignment[chosen_index].value = val;
+    assignment[chosen_index].old_value = val;
+    assignment[chosen_index].decision_lvl = decision_lvl;
+    assignment[chosen_index].reason = NULL;
+
+    trail_push(trail, chosen_index, val, NULL, decision_lvl);
+    return;
+}

@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 {
     if (argc < 2)
     {
-        printf("falsche eingabe\n");
+        printf("Usage: %s <cnf_file> [use_pure_lit]\n", argv[0]);
         return 4;
     }
 

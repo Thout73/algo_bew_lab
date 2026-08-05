@@ -18,20 +18,51 @@ static void print_stats(Stats_CDCL *stats)
 
 int main(int argc, char *argv[])
 {
-
-    if (argc != 2)
-    {
-        printf("%d, falsche eingabe\n", argc);
-        return 4;
-    }
     int number_of_variables, number_of_clauses, maximum_length;
 
-    CDCL_Clause *clauses = parse_cdcl(argv[1], &number_of_variables, &number_of_clauses, &maximum_length);
+    if (argc < 2)
+    {
+        fprintf(stderr,
+                "Usage: %s <cnf-file> [DELETE_CLAUSES] [PROOF_LOG] "
+                "[RESTARTS] [VSIDS] [DELETE_AFTER] "
+                "[DELETE_STEP] [RESTART_AFTER]\n",
+                argv[0]);
+        return EXIT_FAILURE;
+    }
+
+    CDCL_Clause *clauses = parse_cdcl(argv[1],
+                                      &number_of_variables,
+                                      &number_of_clauses,
+                                      &maximum_length);
+
+    CDCL_options options = {
+        .use_delete_clauses = 1,
+        .use_proof_log = 1,
+        .use_restarts = 1,
+        .use_vsids = 1,
+        .delete_after = 2000,
+        .delete_step = 50,
+        .restart_after = 40};
+
+    if (argc > 2)
+        options.use_delete_clauses = atoi(argv[2]);
+    if (argc > 3)
+        options.use_proof_log = atoi(argv[3]);
+    if (argc > 4)
+        options.use_restarts = atoi(argv[4]);
+    if (argc > 5)
+        options.use_vsids = atoi(argv[5]);
+    if (argc > 6)
+        options.delete_after = atoi(argv[6]);
+    if (argc > 7)
+        options.delete_step = atoi(argv[7]);
+    if (argc > 8)
+        options.restart_after = atoi(argv[8]);
 
     Assignment *assignment = malloc(sizeof(*assignment) * number_of_variables);
     Stats_CDCL stats;
 
-    int result = CDCL(clauses, number_of_clauses, number_of_variables, assignment, &stats);
+    int result = CDCL(clauses, number_of_clauses, number_of_variables, assignment, &stats, &options);
 
     if (result == 10)
     {

@@ -69,6 +69,17 @@ typedef struct
     int capacity;
 } LearnedClauses;
 
+typedef struct
+{
+    int use_restarts;
+    int use_delete_clauses;
+    int use_vsids;
+    int use_proof_log;
+    int delete_after;
+    int delete_step;
+    int restart_after;
+} CDCL_options;
+
 void learned_init(LearnedClauses *lc);
 
 CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *watch_DB, int *next_clause_id, Assignment *assignment, CDCL_Clause *confl, int *backtrack_level, int *UIP_lit, int num_vars, int decision_lvl);
@@ -122,9 +133,11 @@ int backtrack(int target_lvl, Trail *trail, Assignment *assignment);
 
 void decide(Assignment *assignment, Trail *trail, int decision_lvl, int number_of_variables);
 
+void decide_random(Assignment *assignment, Trail *trail, int decision_lvl, int number_of_variables);
+
 CDCL_Clause *parse_cdcl(char *file_str, int *number_of_variables, int *number_of_clauses, int *maximum_length);
 
-int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables, Assignment *assignment, Stats_CDCL *stats);
+int CDCL(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables, Assignment *assignment, Stats_CDCL *stats, CDCL_options *options);
 
 int CDCL_inkrementell(CDCL_Clause *clauses, int number_of_clauses, int number_of_variables);
 
