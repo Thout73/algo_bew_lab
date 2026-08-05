@@ -37,6 +37,7 @@
 #
 # Baut die Solver-Binaries einmalig ohne -fsanitize=address (Timing-Messung!).
 
+export LC_ALL=C
 set -uo pipefail
 
 # ============================================================
