@@ -1,9 +1,4 @@
-cnf_files/
 env/
 *.exe
-*.csv
-*.png
-src/cdcl/debug.cnf
-src/cdcl/proof_log.cnf
 drat-trim-master/
 build/
