@@ -42,18 +42,31 @@ static void emit_sink(FILE *f, int sink, int nodes)
 
 int main(int argc, char **argv)
 {
+    if (argc != 3)
+    {
+        fprintf(stderr, "Usage: %s <max-height> <output-file>\n", argv[0]);
+        return 1;
+    }
 
     int max_height = atoi(argv[1]);
+    const char *output_dir = argv[2];
+
+    if (max_height < 1)
+    {
+        fprintf(stderr, "Usage: %s <max-height> <output-file>\n", argv[0]);
+        return 1;
+    }
 
     for (int height = 1; height <= max_height; height++)
     {
-
-        int nodes = (height) * (height + 1) / 2;
+        int nodes = height * (height + 1) / 2;
         int internal = nodes - height;
         int leaves = height;
 
         char file_str[1024];
-        sprintf(file_str, "cnf_files/pebbling%d.cnf", height);
+        snprintf(file_str, sizeof(file_str),
+                 "%s/pebbling%d.cnf", output_dir, height);
+
         FILE *f = fopen(file_str, "w");
 
         if (!f)
@@ -85,10 +98,7 @@ int main(int argc, char **argv)
             int left = v + tri;
             int right = v + tri + 1;
 
-            emit_rule(f,
-                      left,
-                      right,
-                      v, nodes);
+            emit_rule(f, left, right, v, nodes);
         }
 
         /* Wurzel negieren */

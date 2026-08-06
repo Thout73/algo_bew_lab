@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
     {
         fprintf(stderr,
                 "Usage:\n"
-                "%s <variables> <clauses> <clause_length> <outputfile>\n",
+                "%s <variables> <clauses> <clause_length> <output-file>\n",
                 argv[0]);
         return EXIT_FAILURE;
     }

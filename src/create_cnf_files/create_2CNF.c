@@ -41,21 +41,23 @@ int main(int argc, char **argv)
 {
     if (argc != 4)
     {
-        printf("Wrong number of inputs.");
-        return 0;
+        fprintf(stderr, "Usage: %s <variables> <clauses> <output-file>\n", argv[0]);
+        return EXIT_FAILURE;
     }
+
     int NUMBER_OF_VARIABLES = atoi(argv[1]);
     int NUMBER_OF_CLAUSES = atoi(argv[2]);
     int LENGTH_OF_CLAUSES = 2;
     const char *output_path = argv[3];
 
-    if (LENGTH_OF_CLAUSES > NUMBER_OF_VARIABLES)
+    if (NUMBER_OF_VARIABLES < LENGTH_OF_CLAUSES || NUMBER_OF_CLAUSES < 1)
     {
-        printf("Wrong length of clauses or wrong number of variables");
-        return 0;
+        fprintf(stderr, "Usage: %s <variables> <clauses> <output-file>\n", argv[0]);
+        return EXIT_FAILURE;
     }
 
     int variable_array[NUMBER_OF_VARIABLES];
+
     for (int i = 0; i < NUMBER_OF_VARIABLES; i++)
     {
         variable_array[i] = i + 1;
@@ -63,27 +65,12 @@ int main(int argc, char **argv)
 
     int cnf_array[NUMBER_OF_CLAUSES][LENGTH_OF_CLAUSES];
 
-    char cnf_start_string[11] = "p cnf ";
-
-    char str_number_of_variables[20];
-    sprintf(str_number_of_variables, "%d", NUMBER_OF_VARIABLES);
-    char str_number_of_clauses[20];
-    sprintf(str_number_of_clauses, "%d", NUMBER_OF_CLAUSES);
-
-    strcat(cnf_start_string, str_number_of_variables);
-    strcat(cnf_start_string, " ");
-    strcat(cnf_start_string, str_number_of_clauses);
-    strcat(cnf_start_string, "\n");
-
     srand(time(NULL));
 
     for (int k = 0; k < NUMBER_OF_CLAUSES; k++)
     {
-
-        // generating random variables
         shuffle(variable_array, NUMBER_OF_VARIABLES);
 
-        // sorting the variables
         int temp_arr[LENGTH_OF_CLAUSES];
         for (int i = 0; i < LENGTH_OF_CLAUSES; i++)
         {
@@ -99,46 +86,57 @@ int main(int argc, char **argv)
             }
             else
             {
-                cnf_array[k][i] = -1 * temp_arr[i];
+                cnf_array[k][i] = -temp_arr[i];
             }
         }
 
-        // checking for duplicates if found --> repeat
+        /* Checking for duplicates */
         for (int i = 0; i < k; i++)
         {
             int found = 1;
+
             for (int h = 0; h < LENGTH_OF_CLAUSES; h++)
             {
                 if (cnf_array[k][h] != cnf_array[i][h])
                 {
                     found = 0;
+                    break;
                 }
             }
-            if (found == 1)
+
+            if (found)
             {
                 k--;
+                break;
             }
         }
     }
 
-    // Convert Array to String
-    FILE *fptr;
-    fptr = fopen(output_path, "w");
-    fprintf(fptr, "%s", cnf_start_string);
-    char help_str[3 * LENGTH_OF_CLAUSES];
+    /* Write CNF file */
+    FILE *fptr = fopen(output_path, "w");
+
+    if (fptr == NULL)
+    {
+        perror("fopen");
+        return EXIT_FAILURE;
+    }
+
+    fprintf(fptr,
+            "p cnf %d %d\n",
+            NUMBER_OF_VARIABLES,
+            NUMBER_OF_CLAUSES);
 
     for (int i = 0; i < NUMBER_OF_CLAUSES; i++)
     {
-        memset(help_str, 0, strlen(help_str));
         for (int k = 0; k < LENGTH_OF_CLAUSES; k++)
         {
-            char variable_string[3];
-            sprintf(variable_string, "%d ", cnf_array[i][k]);
-            strcat(help_str, variable_string);
+            fprintf(fptr, "%d ", cnf_array[i][k]);
         }
-        fprintf(fptr, "%s0\n", help_str);
+
+        fprintf(fptr, "0\n");
     }
 
     fclose(fptr);
-    return 1;
+
+    return EXIT_SUCCESS;
 }

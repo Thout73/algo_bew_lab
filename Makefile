@@ -98,8 +98,7 @@ GWSAT_FLAGS := \
 # ============================================================
 # Targets
 # ============================================================
-
-.PHONY: help all 2sat dpll gwsat cdcl cdcl_inkremtell cdcl_check clean
+.PHONY: help all 2sat dpll gwsat cdcl cdcl_inkremtell cdcl_check create_2sat create_pebbling create_php create_random_cnf clean
 
 
 help:
@@ -111,6 +110,10 @@ help:
 	@echo "  make cdcl FILE=pfad.cnf               - CDCL-Solver ausführen"
 	@echo "  make cdcl_inkremtell FILE=pfad.cnf    - Inkrementellen CDCL-Solver ausführen"
 	@echo "  make cdcl_check CNF_FILE=... PROOF_LOG=... - Proof mit drat-trim prüfen"
+	@echo "  make create_2sat VARIABLES=... CLAUSES=... OUTPUT=... - 2SAT-CNF erstellen"
+	@echo "  make create_pebbling HEIGHT=... OUTPUT=...          - Pebbling-CNF erstellen"
+	@echo "  make create_php N=... OUTPUT=...                    - PHP-CNF erstellen"
+	@echo "  make create_random_cnf VARIABLES=... CLAUSES=... LENGTH=... OUTPUT=... - zufällige CNF erstellen"
 	@echo "  make clean                            - build/ löschen"
 
 
@@ -168,6 +171,25 @@ cdcl: $(BIN_CDCL)
 cdcl_inkremtell: $(BIN_CDCL_INC)
 	@$(BIN_CDCL_INC) $(FILE) || true
 
+# ============================================================
+# CNF-Dateien erstellen
+# ============================================================
+
+create_2sat:
+	@$(CC) -O3 src/create_cnf_files/create_2SAT.c -o $(BUILD_DIR)/create_2SAT
+	@$(BUILD_DIR)/create_2SAT $(VARIABLES) $(CLAUSES) $(OUTPUT)
+
+create_pebbling:
+	@$(CC) -O3 src/create_cnf_files/create_pebbling.c -o $(BUILD_DIR)/create_pebbling
+	@$(BUILD_DIR)/create_pebbling $(HEIGHT) $(OUTPUT)
+
+create_php:
+	@$(CC) -O3 src/create_cnf_files/create_PHP.c -o $(BUILD_DIR)/create_PHP
+	@$(BUILD_DIR)/create_PHP $(N) $(OUTPUT)
+
+create_random_cnf:
+	@$(CC) -O3 src/create_cnf_files/create_random_cnf.c -o $(BUILD_DIR)/create_random_cnf
+	@$(BUILD_DIR)/create_random_cnf $(VARIABLES) $(CLAUSES) $(LENGTH) $(OUTPUT)
 
 # ============================================================
 # Proof überprüfen
