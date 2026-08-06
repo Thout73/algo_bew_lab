@@ -218,7 +218,7 @@ int DPLL_HELP(int number_of_variables, int number_of_clauses, Clause *clauses, V
         return 1;
     }
 
-    stats->num_of_decisions++; // ein Entscheidungsknoten, unabhängig davon wie viele Zweige er hat
+    stats->num_of_decisions++;
 
     Clause *copy_clauses = malloc(number_of_clauses * sizeof(Clause));
     for (int i = 0; i < number_of_clauses; i++)

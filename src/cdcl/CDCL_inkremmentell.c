@@ -124,7 +124,7 @@ void add_permanent_clause(char *args, WatchDB *watchDB, LearnedClauses *permanen
     curr->size = n;
     curr->id = (*next_clause_id)++;
     curr->literal_block_distance = 0;
-    curr->under_assumption = 0; // permanent -- haengt an keiner assume ab
+    curr->under_assumption = 0;
     curr->watch1 = 0;
     curr->watch2 = (n > 1) ? 1 : 0;
 
@@ -247,9 +247,6 @@ int CDCL_inkrementell(CDCL_Clause *clauses, int number_of_clauses, int number_of
             }
             printf("\n");
 
-            // hier dann auf neue eingaben warten
-            // bei klausel einfach hinzufügen
-
             backtrack(0, &trail, assignment);
             decision_lvl = 0;
 
@@ -268,14 +265,10 @@ int CDCL_inkrementell(CDCL_Clause *clauses, int number_of_clauses, int number_of
                 if (fgets(line, sizeof(line), stdin) == NULL)
                     break; // EOF (z.B. Ctrl+D) -> Schleife beenden
 
-                // Zeilenumbruch entfernen
                 line[strcspn(line, "\n")] = '\0';
 
-                // leere Eingabe ignorieren
                 if (line[0] == '\0')
                     continue;
-
-                // erstes Wort (Befehl) und Rest (Argumente) trennen
                 char command[64];
                 char args[192] = {0};
                 int matched = sscanf(line, "%63s %191[^\n]", command, args);

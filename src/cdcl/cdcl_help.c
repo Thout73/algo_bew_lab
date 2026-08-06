@@ -4,6 +4,8 @@
 #include <time.h>
 #include "functions_cdcl.h"
 
+// diverse Hilfs-Funktionen für den CDCL-Solver
+
 int sign(int x)
 {
     if (x < 0)
@@ -46,21 +48,16 @@ int getLubyElement(int n)
 {
     while (1)
     {
-        // Prüfen, ob n von der Form 2^k - 1 ist
         if ((n & (n + 1)) == 0)
         {
-            // Wenn ja, ist das Element gleich (n + 1) / 2
             return (n + 1) / 2;
         }
 
-        // Finde die größte Zweierpotenz kleiner als n
         int k = 1;
         while (k * 2 - 1 < n)
         {
             k *= 2;
         }
-
-        // Reduziere n auf das entsprechende Element im vorherigen Block
         n = n - (k - 1);
     }
 }
@@ -237,9 +234,6 @@ void decide(Assignment *assignment, Trail *trail, int decision_lvl, int number_o
 
 void decide_random(Assignment *assignment, Trail *trail, int decision_lvl, int number_of_variables)
 {
-    // Reservoir Sampling: waehlt gleichverteilt zufaellig eine der
-    // unassigned Variablen aus, ohne vorher ein separates Array aller
-    // unassigned Indizes aufbauen zu muessen.
     int chosen_index = -1;
     int unassigned_count = 0;
 

@@ -224,12 +224,6 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
 
     if (learned_size == 1)
     {
-        // printf("LEARN: ");
-        // for (int i = 0; i < new_clause->size; i++)
-        //{
-        //    printf("%d ", new_clause->literals[i]);
-        //}
-        // printf("Decisionlvl: %d Backtrack: %d\n", decision_lvl, *backtrack_level);
         learned_add(learned, new_clause);
         *backtrack_level = 0;
         return new_clause;
@@ -276,13 +270,6 @@ CDCL_Clause *analyse_conflict(Trail *trail, LearnedClauses *learned, WatchDB *wa
         else
             watchlist_add(&watch_DB->neg[v2], new_clause);
     }
-
-    // printf("LEARN: ");
-    // for (int i = 0; i < new_clause->size; i++)
-    // {
-    //     printf("%d ", new_clause->literals[i]);
-    // }
-    // printf("Decisionlvl: %d Backtrack: %d LBD: %d\n", decision_lvl, *backtrack_level, new_clause->literal_block_distance);
 
     return new_clause;
 }
